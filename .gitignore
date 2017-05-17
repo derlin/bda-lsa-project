@@ -1,4 +1,5 @@
 wikidump.xml
+wikidump*
 
 ### idea
 .idea
@@ -19,3 +20,6 @@ project/plugins/project/
 spark-warehouse
 metastore_db
 derby.log
+
+## docco
+docs
