@@ -1,6 +1,6 @@
 // useful commands:
-//  sbt clean => clean the target directories
-//  sbt assembly => create a jar file with manifest and dependencies
+//  * sbt clean => clean the target directories
+//  * sbt assembly => create a jar file with manifest and dependencies (see `project/assembly.sbt` and https://github.com/sbt/sbt-assembly)
 //
 // example:
 //  sbt clean assembly
@@ -31,6 +31,10 @@ libraryDependencies ++= Seq(
 // dependencies for parsing Wikipedia dumps
 libraryDependencies ++= Seq(
   "edu.umd" % "cloud9" % "1.5.0"
+)
+
+libraryDependencies ++= Seq(
+  "com.databricks" %% "spark-csv" % "1.5.0"
 )
 
 // stanford corenlp (https://stanfordnlp.github.io/CoreNLP/) is used
