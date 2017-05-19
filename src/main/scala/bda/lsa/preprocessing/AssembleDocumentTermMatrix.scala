@@ -4,15 +4,15 @@
  * See LICENSE file for further information.
  */
 
-package bda.lsa
+package bda.lsa.preprocessing
 
-import edu.umd.cloud9.collection.XMLInputFormat
-import edu.stanford.nlp.ling.CoreAnnotations.{LemmaAnnotation, SentencesAnnotation, TokensAnnotation}
-import edu.stanford.nlp.pipeline.{Annotation, StanfordCoreNLP}
-import edu.umd.cloud9.collection.wikipedia.WikipediaPage
-import edu.umd.cloud9.collection.wikipedia.language.EnglishWikipediaPage
 import java.util.Properties
 
+import edu.stanford.nlp.ling.CoreAnnotations.{LemmaAnnotation, SentencesAnnotation, TokensAnnotation}
+import edu.stanford.nlp.pipeline.{Annotation, StanfordCoreNLP}
+import edu.umd.cloud9.collection.XMLInputFormat
+import edu.umd.cloud9.collection.wikipedia.WikipediaPage
+import edu.umd.cloud9.collection.wikipedia.language.EnglishWikipediaPage
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.{LongWritable, Text}
 import org.apache.spark.ml.feature.{CountVectorizer, IDF}
@@ -20,8 +20,6 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 
 import scala.collection.JavaConverters._
-
-
 import scala.collection.mutable.ArrayBuffer
 
 class AssembleDocumentTermMatrix(private val spark: SparkSession) extends Serializable {

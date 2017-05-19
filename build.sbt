@@ -12,7 +12,7 @@ version := "1.0"
 scalaVersion := "2.11.8"
 
 // set the main class of the jar
-mainClass in Compile := Some("bda.lsa.RunLSA")
+mainClass in Compile := Some("bda.lsa.preprocessing.XmlToParquetWriter")
 
 val scalaMajorVersion = "2.11"
 val sparkVersion = "2.1.1"

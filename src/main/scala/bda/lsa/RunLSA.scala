@@ -6,8 +6,8 @@
 
 package bda.lsa
 
+import bda.lsa.preprocessing.AssembleDocumentTermMatrix
 import breeze.linalg.{DenseMatrix => BDenseMatrix, SparseVector => BSparseVector}
-
 import org.apache.spark.mllib.linalg.{Matrices, Matrix, SingularValueDecomposition, Vectors, Vector => MLLibVector}
 import org.apache.spark.ml.linalg.{Vector => MLVector}
 import org.apache.spark.mllib.linalg.distributed.RowMatrix

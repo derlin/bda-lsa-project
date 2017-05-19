@@ -1,7 +1,6 @@
-package bda.lsa
+package bda.lsa.preprocessing
 
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.Dataset
+import org.apache.spark.sql.{Dataset, SparkSession}
 
 // author: Lucy Linder <lucy.derlin@gmail.com>
 // date: 15.05.17
@@ -29,26 +28,22 @@ import org.apache.spark.sql.Dataset
 //
 
 
-object XMLDataParser extends App{
+object XmlToParquetWriter extends App{
   // parse arguments:
   // usage: input-path output-path [num partitions]
   // the partitions argument will determine the number of output files
-  val path = if(args.length > 0) args(0) else "/shared/wikipedia/wikidump.xml"
-  val output = if(args.length > 1) args(1) else "/shared/wikipedia/wikidump-csv"
-  val partitions = if (args.length > 2) args(2).toInt else -1
-
-  val stopwordsFile = "src/main/resources/stopwords.txt"
-
-  val spark = SparkSession.builder().getOrCreate()
+  val partitions = if (args.length > 1) args(0).toInt else -1
+  
+  val spark = SparkSession.builder().master("local[*]").getOrCreate()
   
   val assembleMatrix = new AssembleDocumentTermMatrix(spark)
   import assembleMatrix._
   
-  var docTexts: Dataset[(String, String)] = parseWikipediaDump(path)
+  var docTexts: Dataset[(String, String)] = parseWikipediaDump(bda.lsa.wikidumpPath)
   if(partitions > 0) docTexts = docTexts.coalesce(partitions)
 
   /* uncomment this for parquet */
-  docTexts.write.parquet(output)
+  //docTexts.write.parquet(bda.lsa.wikidumpParquetPath)
 
   /* uncomment this for csv
   docTexts.write.

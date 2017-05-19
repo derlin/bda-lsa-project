@@ -1,3 +1,4 @@
+
 /**
   * date: 14.05.17
   *
@@ -11,11 +12,10 @@ val stopwordsFile = "src/main/resources/stopwords.txt"
 val numTerms = 2000
 val k = 100
 
-
-import bda.lsa.AssembleDocumentTermMatrix
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.sql.Dataset
+import bda.lsa.preprocessing.AssembleDocumentTermMatrix
 
 val assembleMatrix = new AssembleDocumentTermMatrix(spark)
 

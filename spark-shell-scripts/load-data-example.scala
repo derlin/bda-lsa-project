@@ -1,3 +1,4 @@
+
 /**
   * date: 13.05.17
   *
@@ -38,9 +39,9 @@ val k = 20
 val path = "wikidump.xml"
 val stopwordsFile = "src/main/resources/stopwords.txt"
 
-import bda.lsa.AssembleDocumentTermMatrix
 import org.apache.spark.sql.Dataset
 
+import bda.lsa.preprocessing.AssembleDocumentTermMatrix
 val assembleMatrix = new AssembleDocumentTermMatrix(spark)
 
 import assembleMatrix._
