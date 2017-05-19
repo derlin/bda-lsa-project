@@ -2,8 +2,8 @@ package bda.lsa.lda.mllib
 
 import bda.lsa._
 import org.apache.spark.ml.linalg.{Vector => MLVector}
-import org.apache.spark.mllib.clustering.{DistributedLDAModel, LDA => MLLIB_LDA}
-import org.apache.spark.mllib.linalg.{Vector => MLLIBVector}
+import org.apache.spark.mllib.clustering.{DistributedLDAModel => mllib_DistributedLDAModel, LDA => mllib_LDA}
+import org.apache.spark.mllib.linalg.{Vector => mllib_Vector}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.serializer.KryoSerializer
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -14,7 +14,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
   * @author Lucy Linder <lucy.derlin@gmail.com>
   */
 object RunLDA {
-  val pathSuffix = "/mllib-lda-model"
+  val pathSuffix = "/mllib-lda"
 
   def main(args: Array[String]): Unit = {
     // parse arguments
@@ -26,15 +26,15 @@ object RunLDA {
       getOrCreate()
 
     val (docTermMatrix, termIds, docIds): (DataFrame, Array[String], Map[Long, String]) = getData(spark)
-    val corpus: RDD[(Long, (MLLIBVector, String))] = docTermMatrixToCorpusRDD(spark, docTermMatrix)
+    val corpus: RDD[(Long, (mllib_Vector, String))] = docTermMatrixToCorpusRDD(spark, docTermMatrix)
 
     corpus.cache()
 
-    val model: DistributedLDAModel =
-      new MLLIB_LDA().
+    val model: mllib_DistributedLDAModel =
+      new mllib_LDA().
         setK(k).
         run(corpus.mapValues(_._1)).
-        asInstanceOf[DistributedLDAModel]
+        asInstanceOf[mllib_DistributedLDAModel]
 
     // to load it back, use val model = DistributedLDAModel.load(sc, "XXX/mllib-lda-model")
     saveModel(spark, model)
@@ -42,11 +42,11 @@ object RunLDA {
 
   // -----------------
 
-  def saveModel(spark: SparkSession, model: DistributedLDAModel) =
+  def saveModel(spark: SparkSession, model: mllib_DistributedLDAModel) =
     model.save(spark.sparkContext, baseDir + pathSuffix)
 
-  def loadModel(spark: SparkSession): DistributedLDAModel =
-    DistributedLDAModel.load(spark.sparkContext, baseDir + pathSuffix)
+  def loadModel(spark: SparkSession): mllib_DistributedLDAModel =
+    mllib_DistributedLDAModel.load(spark.sparkContext, baseDir + pathSuffix)
 }
 
 

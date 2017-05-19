@@ -1,7 +1,7 @@
 package bda
 
 
-import org.apache.spark.mllib.linalg.{Vector => MLLIBVector}
+import org.apache.spark.mllib.linalg.{Vector => mllib_Vector}
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.ml.linalg.{Vector => MLVector}
@@ -32,7 +32,7 @@ package object lsa {
   def wikidumpMatrixPath = baseDir + "/matrix"
 
 
-  def docTermMatrixToRDD(docTermMatrix: DataFrame, featuresCol: String = "tfidfVec"): RDD[MLLIBVector] = {
+  def docTermMatrixToRDD(docTermMatrix: DataFrame, featuresCol: String = "tfidfVec"): RDD[mllib_Vector] = {
     docTermMatrix.select(featuresCol).rdd.map { row =>
       Vectors.fromML(row.getAs[MLVector](featuresCol))
     }
@@ -48,7 +48,8 @@ package object lsa {
     * @return a PairRDD (id, (freqs-vector, title)): the key corresponds to the document's id (its row index in docTermMatrix),
     *         the value is a tuple made of the term frequencies (tfidfVec) as mllib.Vectors and the document's title.
     */
-  def docTermMatrixToCorpusRDD(spark: SparkSession, docTermMatrix: DataFrame, featuresCol: String = "tfidfVec", titleCol: String = "title"): RDD[(Long, (MLLIBVector, String))] = {
+  def docTermMatrixToCorpusRDD(spark: SparkSession, docTermMatrix: DataFrame, featuresCol: String = "tfidfVec", titleCol: String = "title"):
+  RDD[(Long, (mllib_Vector, String))] = {
     import spark.implicits._
     docTermMatrix.
       select("tfidfVec", "title").
