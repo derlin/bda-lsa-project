@@ -7,6 +7,7 @@ import org.apache.spark.mllib.linalg.{Vectors, Vector => MLLibVector}
 import org.apache.spark.ml.linalg.{Vector => MLVector}
 import org.apache.spark.mllib.clustering.{DistributedLDAModel, LDA => MLLIB_LDA}
 import org.apache.spark.rdd.RDD
+import bda.lsa._
 
 /**
   * date: 18.05.17
@@ -15,33 +16,16 @@ import org.apache.spark.rdd.RDD
   */
 
 
-
 object MllibLDA extends App {
-
-  val path = if (args.length > 0) args(0) else "wikidump.xml"
-  val k = if (args.length > 1) args(1).toInt else 100
-  val numTerms = if (args.length > 2) args(2).toInt else 20000
+  val k = if (args.length > 0) args(0).toInt else 100
 
   val spark = SparkSession.builder().
     config("spark.serializer", classOf[KryoSerializer].getName).
     master("local[*]").
     getOrCreate()
 
-  val (docTermMatrix, termIds, docIds, termIdfs): (DataFrame, Array[String], Map[Long, String], Array[Double]) = {
-    val assembleMatrix = new AssembleDocumentTermMatrix(spark)
-    import assembleMatrix._
-    val docTexts: Dataset[(String, String)] = parseWikipediaDump(path)
-    documentTermMatrix(docTexts, "src/main/resources/stopwords.txt", numTerms)
-  }
-
-  import spark.implicits._
-  val corpus: RDD[(Long, (MLLibVector, String))] =
-    docTermMatrix.
-      select("tfidfVec", "title").
-      map{ r => (Vectors.fromML(r.getAs[MLVector](0)), r.getAs[String](1)) }.
-      rdd.
-      zipWithIndex.
-      map(_.swap)
+  val (docTermMatrix, termIds, docIds): (DataFrame, Array[String], Map[Long, String]) = getData(spark)
+  val corpus: RDD[(Long, (MLLibVector, String))] = docTermMatrixToCorpusRDD(spark, docTermMatrix)
 
   corpus.cache()
 
@@ -51,10 +35,13 @@ object MllibLDA extends App {
       run(corpus.mapValues(_._1)).
       asInstanceOf[DistributedLDAModel]
 
+  // to load it back, use val model = DistributedLDAModel.load(sc, "XXX/mllib-lda-model")
+  model.save(spark.sparkContext, baseDir + "/mllib-lda-model")
 
 }
 
-class LDAModelQueryer(spark : SparkSession, model: DistributedLDAModel, corpus: RDD[(Long, (MLLibVector, String))], vocabulary: Array[String]) {
+class LDAModelQueryer(spark: SparkSession, model: DistributedLDAModel, corpus: RDD[(Long, (MLLibVector, String))], vocabulary: Array[String]) {
+
   import spark.implicits._
 
   val docsWithTitlesDF = // [id: bigint, title: string]
@@ -63,7 +50,7 @@ class LDAModelQueryer(spark : SparkSession, model: DistributedLDAModel, corpus: 
       toDF("id", "title").
       cache()
 
-  val docsTitleLookup : RDD[(Long, String)] = docsWithTitlesDF.rdd.map(r => (r.getAs[Long](0), r.getAs[String](1)))
+  val docsTitleLookup: RDD[(Long, String)] = docsWithTitlesDF.rdd.map(r => (r.getAs[Long](0), r.getAs[String](1)))
 
 
   def describeTopicsWithWords(numWords: Int) = {
@@ -83,7 +70,7 @@ class LDAModelQueryer(spark : SparkSession, model: DistributedLDAModel, corpus: 
     model.topTopicsPerDocument(numTopics).filter(_._1 == id).map(_._2.toArray).first
   }
 
-  def topDocumentsForTopic(tid: Int, numDocs : Int = 10) = {
+  def topDocumentsForTopic(tid: Int, numDocs: Int = 10) = {
     val topDocs = model.topDocumentsPerTopic(numDocs)(tid)
     spark.sparkContext.
       parallelize(topDocs._1.zipWithIndex).
@@ -96,7 +83,8 @@ class LDAModelQueryer(spark : SparkSession, model: DistributedLDAModel, corpus: 
 }
 
 
-class LDAModelQueryer_(spark : SparkSession, model: DistributedLDAModel, corpus: RDD[(Long, (MLLibVector, String))], vocabulary: Array[String]) {
+class LDAModelQueryer_(spark: SparkSession, model: DistributedLDAModel, corpus: RDD[(Long, (MLLibVector, String))], vocabulary: Array[String]) {
+
   import spark.implicits._
 
 
@@ -112,12 +100,12 @@ class LDAModelQueryer_(spark : SparkSession, model: DistributedLDAModel, corpus:
   //      map( t => (t._2, (t._1._1.map(vocabulary(_)).mkString("-"), t._1._2.sum))).
   //      toMap
   lazy val topicsPerWeight: Array[(Int, Double)] =
-    model.
-      describeTopics().
-      map(_._2.sum).
-      zipWithIndex.
-      map(_.swap).
-      sortBy(-_._2)
+  model.
+    describeTopics().
+    map(_._2.sum).
+    zipWithIndex.
+    map(_.swap).
+    sortBy(-_._2)
 
   lazy val docsWithTitlesDF = // [id: bigint, title: string]
     corpus.
