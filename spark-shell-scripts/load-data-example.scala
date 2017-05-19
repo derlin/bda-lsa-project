@@ -29,7 +29,14 @@
  val stopwordsFile = "src/main/resources/stopwords.txt"
  val numTerms = 2000
  val k = 100
+ val path = "/shared/wikipedia/wikidump-mini.xml"
+val path = "/shared/wikipedia/wikidump.xml"
   */
+
+val numTerms = 1000
+val k = 20
+val path = "wikidump.xml"
+val stopwordsFile = "src/main/resources/stopwords.txt"
 
 import bda.lsa.AssembleDocumentTermMatrix
 import org.apache.spark.sql.Dataset

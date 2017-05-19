@@ -8,13 +8,13 @@ import org.apache.spark.sql.Dataset
 // Parse XML wikidump, clean, remove stopwords, lemmatize and finally save the result to HDFS.
 //
 // ## Launch on the Daplab
-// With this configuration, it took 8m32s
+// With this configuration, it took 21m32s
 // ```
 // export SPARK_MAJOR_VERSION=2
 // export HADOOP_CONF_DIR=/etc/hadoop/conf
 // export LD_LIBRARY_PATH=/usr/hdp/current/hadoop-client/lib/native:$LD_LIBRARY_PATH
 // spark-submit --class bda.lsa.XMLDataParser --master yarn-client \
-//    --num-executors 8 --driver-memory 20G --executor-memory 10g \
+//    --num-executors 8 --driver-memory 10G --executor-memory 20g \
 //    bda-prepare-data.jar /shared/wikipedia/wikidump.xml /shared/wikipedia/wikidump-parquet 20
 // ```
 // ## Reloading data
@@ -27,6 +27,8 @@ import org.apache.spark.sql.Dataset
 // sqlContext.read.format("parquet").load("/path/to/directory/*")
 // ```
 //
+
+
 object XMLDataParser extends App{
   // parse arguments:
   // usage: input-path output-path [num partitions]
@@ -46,10 +48,7 @@ object XMLDataParser extends App{
   if(partitions > 0) docTexts = docTexts.coalesce(partitions)
 
   /* uncomment this for parquet */
-  docTexts.write.
-    format("parquet").
-    option("header", "true").
-    save(output)
+  docTexts.write.parquet(output)
 
   /* uncomment this for csv
   docTexts.write.
