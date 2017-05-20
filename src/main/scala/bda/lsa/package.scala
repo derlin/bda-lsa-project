@@ -69,12 +69,14 @@ package object lsa {
     * @param docTermMatrix
     * @param termIds
     * @param docIds
+    * @param idfs
     */
-  def saveData(spark: SparkSession, docTermMatrix: DataFrame, termIds: Array[String], docIds: Map[Long, String]): Unit = {
+  def saveData(spark: SparkSession, docTermMatrix: DataFrame, termIds: Array[String], docIds: Map[Long, String], idfs: Array[Double]): Unit = {
     import spark.implicits._
     docTermMatrix.write.parquet(wikidumpMatrixPath + "/docTermMatrix")
     spark.sparkContext.parallelize(termIds, 1).toDF().write.parquet(wikidumpMatrixPath + "/termIds")
     spark.sparkContext.parallelize(docIds.toSeq).toDF.write.parquet(wikidumpMatrixPath + "/docIds")
+    spark.sparkContext.parallelize(idfs).toDF.write.parquet(wikidumpMatrixPath + "/idfs")
     // TODO: don't save docIds, since we can get them back using
     // docTermMatrix.select("title").rdd.zipWithUniqueId.map(_.swap).collect.toMap
   }
@@ -87,15 +89,16 @@ package object lsa {
     *          - `docTermMatrix`: a Dataset with two columns: `title:String` and `tfidfVec:ml.Vector`
     *          - `termIds`: the array of terms in the dictionary
     *          - `docIds`: a map mapping a document id with a document title
+    *          - `idfs`: tf-idfs array, used by the original LSA Query Engine
     */
-  def getData(spark: SparkSession): (DataFrame, Array[String], Map[Long, String]) = {
+  def getData(spark: SparkSession): (DataFrame, Array[String], Map[Long, String], Array[Double]) = {
     import spark.implicits._
     val docTermMatrix = spark.sqlContext.read.parquet(wikidumpMatrixPath + "/docTermMatrix")
     val termIds = spark.sqlContext.read.parquet(wikidumpMatrixPath + "/termIds").map(_.getAs[String](0)).collect
     val docIds = spark.sqlContext.read.parquet(wikidumpMatrixPath + "/docIds").map {
       r => (r.getAs[Long](0), r.getAs[String](1))
     }.collect.toMap
-
-    (docTermMatrix, termIds, docIds)
+    val idfs = spark.sqlContext.read.parquet(wikidumpMatrixPath + "/idfs").map(_.getAs[Double](0)).collect
+    (docTermMatrix, termIds, docIds, idfs)
   }
 }

@@ -3,8 +3,6 @@ package bda.lsa.lda.ml
 import bda.lsa._
 
 import org.apache.spark.ml.clustering.{DistributedLDAModel => ml_DistributedLDAModel, LDA => ml_LDA}
-import org.apache.spark.ml.linalg.{Vector => ml_Vector}
-import org.apache.spark.rdd.RDD
 import org.apache.spark.serializer.KryoSerializer
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
@@ -25,7 +23,7 @@ object RunLDA {
       master("local[*]").
       getOrCreate()
 
-    val (docTermMatrix, termIds, docIds): (DataFrame, Array[String], Map[Long, String]) = getData(spark)
+    val (docTermMatrix, termIds, docIds, idfs): (DataFrame, Array[String], Map[Long, String], Array[Double]) = getData(spark)
 
     val lda_model: ml_LDA =
       new ml_LDA().

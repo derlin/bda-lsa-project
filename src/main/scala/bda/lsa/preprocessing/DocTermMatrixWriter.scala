@@ -21,7 +21,8 @@ object DocTermMatrixWriter extends App {
   }
 
   val assembleMatrix = new AssembleDocumentTermMatrix(spark)
-  val (docTermMatrix, termIds, docIds, termIdfs) = assembleMatrix.documentTermMatrix(docTexts, bda.lsa.STOPWORDS_PATH, numTerms)
+  //val (docTermMatrix, termIds, docIds, termIdfs) = assembleMatrix.documentTermMatrix(docTexts, bda.lsa.STOPWORDS_PATH, numTerms)
+  val (docTermMatrix, termIds, docIds, termIdfs) = TextToIDF.preprocess(spark, docTexts, numTerms)
 
-  bda.lsa.saveData(spark, docTermMatrix, termIds, docIds)
+  bda.lsa.saveData(spark, docTermMatrix, termIds, docIds, termIdfs)
 }

@@ -1,7 +1,7 @@
 package bda.lsa.lda.mllib
 
 import bda.lsa._
-import org.apache.spark.ml.linalg.{Vector => MLVector}
+import org.apache.spark.ml.linalg.{Vector => ml_Vector}
 import org.apache.spark.mllib.clustering.{DistributedLDAModel => mllib_DistributedLDAModel, LDA => mllib_LDA}
 import org.apache.spark.mllib.linalg.{Vector => mllib_Vector}
 import org.apache.spark.rdd.RDD
@@ -25,7 +25,7 @@ object RunLDA {
       master("local[*]").
       getOrCreate()
 
-    val (docTermMatrix, termIds, docIds): (DataFrame, Array[String], Map[Long, String]) = getData(spark)
+    val (docTermMatrix, termIds, docIds, idfs): (DataFrame, Array[String], Map[Long, String], Array[Double]) = getData(spark)
     val corpus: RDD[(Long, (mllib_Vector, String))] = docTermMatrixToCorpusRDD(spark, docTermMatrix)
 
     corpus.cache()

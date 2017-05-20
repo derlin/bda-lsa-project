@@ -24,7 +24,7 @@ object RunSVD {
       master("local[*]").
       getOrCreate()
 
-    val (docTermMatrix, termIds, docIds): (DataFrame, Array[String], Map[Long, String]) = getData(spark)
+    val (docTermMatrix, termIds, docIds, idfs): (DataFrame, Array[String], Map[Long, String], Array[Double]) = getData(spark)
     val corpus: RDD[(Long, (mllib_Vector, String))] = docTermMatrixToCorpusRDD(spark, docTermMatrix)
 
     val vecRDD = corpus.map(_._2._1)
