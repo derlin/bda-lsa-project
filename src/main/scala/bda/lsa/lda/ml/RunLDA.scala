@@ -22,7 +22,7 @@ object RunLDA {
       config("spark.serializer", classOf[KryoSerializer].getName).
       getOrCreate()
 
-    val (docTermMatrix, termIds, docIds, idfs): (DataFrame, Array[String], Map[Long, String], Array[Double]) = getData(spark)
+    val data = getData(spark)
 
     val lda_model: ml_LDA =
       new ml_LDA().
@@ -30,7 +30,7 @@ object RunLDA {
         setMaxIter(10).
         setFeaturesCol("tfidfVec")
 
-    val model: ml_DistributedLDAModel = lda_model.fit(docTermMatrix).asInstanceOf[ml_DistributedLDAModel]
+    val model: ml_DistributedLDAModel = lda_model.fit(data.dtm).asInstanceOf[ml_DistributedLDAModel]
 
     // to load it back, use val model = DistributedLDAModel.load(sc, "XXX/mllib-lda-model")
     saveModel(spark, model)

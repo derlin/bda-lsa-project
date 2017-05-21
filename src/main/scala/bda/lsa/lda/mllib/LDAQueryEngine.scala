@@ -1,41 +1,28 @@
 package bda.lsa.lda.mllib
 
+import bda.lsa.Data
 import org.apache.spark.mllib.clustering.DistributedLDAModel
 import org.apache.spark.mllib.linalg.{Vector => mllib_Vector, Vectors => mllib_Vectors}
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{Row, SparkSession}
 
 /**
   * date: 19.05.17
   *
   * @author Lucy Linder <lucy.derlin@gmail.com>
   */
-class LDAQueryEngine(spark: SparkSession, model: DistributedLDAModel, corpus: RDD[(Long, (mllib_Vector, String))], vocabulary: Array[String]) {
+class LDAQueryEngine(model: DistributedLDAModel, data: Data) {
 
-  import spark.implicits._
+  val docIdTitleRDD: RDD[(Long, String)] = data.docIdsLookup.rdd.map {
+    case Row(id: Int, title: String) => (id, title)
+  }
 
-  val docsWithTitlesDF = // [id: bigint, title: string]
-    corpus.
-      map(x => (x._1, x._2._2)).
-      toDF("id", "title").
-      cache()
-
-  val docsTitleLookup: RDD[(Long, String)] = docsWithTitlesDF.rdd.map(r => (r.getAs[Long](0), r.getAs[String](1)))
-
-  lazy val termsLookup = vocabulary.zipWithIndex.toMap
 
   def describeTopicsWithWords(numWords: Int) = {
     model.
       describeTopics(numWords).
-      map { topic => topic._1.map(vocabulary(_)) }
+      map { topic => topic._1.map(data.termIds(_)) }
   }
-
-  def findDocs(search: String): Array[(Long, String)] =
-    docsWithTitlesDF.
-      select("id", "title").
-      where($"title".like("%" + search + "%")).
-      map(r => (r.getAs[Long](0), r.getAs[String](1))).
-      collect()
 
   def topTopicsForDocument(id: Long, numTopics: Int = 10): Array[Int] = {
     model.topTopicsPerDocument(numTopics).filter(_._1 == id).map(_._2.toArray).first
@@ -43,9 +30,9 @@ class LDAQueryEngine(spark: SparkSession, model: DistributedLDAModel, corpus: RD
 
   def topDocumentsForTopic(tid: Int, numDocs: Int = 10) = {
     val topDocs = model.topDocumentsPerTopic(numDocs)(tid)
-    spark.sparkContext.
+    data.spark.sparkContext.
       parallelize(topDocs._1.zipWithIndex).
-      join(docsTitleLookup).
+      join(docIdTitleRDD).
       mapValues(_._2).
       collect()
   }
@@ -56,11 +43,11 @@ class LDAQueryEngine(spark: SparkSession, model: DistributedLDAModel, corpus: RD
       zipWithIndex.
       sortBy(-_._1)
   }
-  
+
   def topTopicsForWord_(wid: Int) = {
     // see https://gist.github.com/alex9311/774089d936eee505d7832c6df2eb597d
-       val term = mllib_Vectors.sparse(vocabulary.length, Array((wid -> 1.0)).toSeq)
-       val topicDistrib = model.toLocal.topicDistribution(term).toArray.zipWithIndex.sortBy(-_._1)
-       topicDistrib
+    val term = mllib_Vectors.sparse(data.termIds.length, Array((wid -> 1.0)).toSeq)
+    val topicDistrib = model.toLocal.topicDistribution(term).toArray.zipWithIndex.sortBy(-_._1)
+    topicDistrib
   }
 }
