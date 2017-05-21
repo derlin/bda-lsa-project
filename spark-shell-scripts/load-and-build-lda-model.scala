@@ -8,8 +8,10 @@
 // spark-shell --jars target/scala-2.11/bda-project-lsa-assembly-1.0.jar
 // ```
 
-// We start by loading the necessary
-:load spark-shell-scripts/imports.scala
+// Start by loading the necessary imports :
+// ```
+// :load spark-shell-scripts/imports.scala
+// ```
 
 // Then build the model
 val model = lda.mllib.RunLDA.loadModel(spark);
