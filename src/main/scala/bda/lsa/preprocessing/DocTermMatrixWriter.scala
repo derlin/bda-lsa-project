@@ -1,6 +1,5 @@
 package bda.lsa.preprocessing
 
-import bda.lsa.preprocessing.XmlToParquetWriter.args
 import org.apache.spark.sql.{Dataset, SparkSession}
 import bda.lsa._
 
@@ -11,8 +10,9 @@ import bda.lsa._
   */
 object DocTermMatrixWriter extends App {
   val numTerms = if (args.length > 0) args(0).toInt else 2000
+  val mode = if (args.length > 1 && args(1).startsWith("m")) "mine" else "orig" // mine or orig
 
-  val spark = SparkSession.builder().master(properties.getProperty("spark.master")).getOrCreate()
+  val spark = SparkSession.builder().getOrCreate()
 
   import spark.implicits._
 
@@ -20,9 +20,15 @@ object DocTermMatrixWriter extends App {
     r => (r.getAs[String](0), r.getAs[String](1))
   }
 
-  val assembleMatrix = new AssembleDocumentTermMatrix(spark)
-  //val (docTermMatrix, termIds, docIds, termIdfs) = assembleMatrix.documentTermMatrix(docTexts, bda.lsa.STOPWORDS_PATH, numTerms)
-  val (docTermMatrix, termIds, docIds, termIdfs) = TextToIDF.preprocess(spark, docTexts, numTerms)
 
-  bda.lsa.saveData(spark, docTermMatrix, termIds, docIds, termIdfs)
+  if (mode == "orig") {
+    val assembleMatrix = new AssembleDocumentTermMatrix(spark)
+    val (docTermMatrix, termIds, docIds, termIdfs) = assembleMatrix.documentTermMatrix(docTexts, bda.lsa.STOPWORDS_PATH, numTerms)
+    bda.lsa.saveData(spark, docTermMatrix, termIds, docIds, termIdfs)
+
+  } else {
+    val (docTermMatrix, termIds, docIds, termIdfs) = TextToIDF.preprocess(spark, docTexts, numTerms)
+    bda.lsa.saveData(spark, docTermMatrix, termIds, docIds, termIdfs)
+  }
+
 }

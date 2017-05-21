@@ -30,7 +30,8 @@ object TextToIDF {
 
     // remove articles with less than 2 relevant words
     val filtered = words.where(size($"terms") > 1)
-
+    filtered.cache()
+    
     // count terms
     val countVectorizer = new CountVectorizer().
       setInputCol("terms").

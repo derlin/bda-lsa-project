@@ -40,13 +40,15 @@ libraryDependencies ++= Seq(
 // stanford corenlp (https://stanfordnlp.github.io/CoreNLP/) is used
 // to clean the XML file into plainttext
 libraryDependencies ++= Seq(
-  "edu.stanford.nlp" % "stanford-corenlp" % "3.4.1",
-  "edu.stanford.nlp" % "stanford-corenlp" % "3.4.1" classifier "models",
+  "edu.stanford.nlp" % "stanford-corenlp" % "3.7.0",
+  "edu.stanford.nlp" % "stanford-corenlp" % "3.7.0" classifier "models",
   "info.bliki.wiki" % "bliki-core" % "3.0.19"
 )
 
-// I don't think it is important after all...
+unmanagedJars in Compile += file("lib/spark-corenlp-0.2.0-s_2.11.jar")
+
+//libraryDependencies += "databricks" % "spark-corenlp" % "0.2.0-s_2.11"
 //resolvers ++= Seq(
 //  // other resolvers here
-//  "Sonatype Releases" at "https://oss.sonatype.org/content/repositories/releases/"
+//  "Maven Releases" at "https://dl.bintray.com/spark-packages/maven/"
 //)

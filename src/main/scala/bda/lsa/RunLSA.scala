@@ -25,8 +25,8 @@ object RunLSA {
 
     val spark = SparkSession.builder().
       config("spark.serializer", classOf[KryoSerializer].getName).
-      master("local[*]").
       getOrCreate()
+    
     val assembleMatrix = new AssembleDocumentTermMatrix(spark)
     import assembleMatrix._
 

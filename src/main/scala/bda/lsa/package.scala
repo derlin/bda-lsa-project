@@ -27,9 +27,9 @@ package object lsa {
 
   var wikidumpPath = properties.getProperty("path.wikidump")
 
-  def wikidumpParquetPath = baseDir + "/wikidump-parquet"
+  def wikidumpParquetPath = properties.getProperty("path.wikidump.parquet", baseDir + "/wikidump-parquet")
 
-  def wikidumpMatrixPath = baseDir + "/matrix"
+  def wikidumpMatrixPath = properties.getProperty("path.matrix", baseDir + "/matrix")
 
 
   def docTermMatrixToRDD(docTermMatrix: DataFrame, featuresCol: String = "tfidfVec"): RDD[mllib_Vector] = {

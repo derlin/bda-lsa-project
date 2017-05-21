@@ -20,7 +20,6 @@ object RunLDA {
 
     val spark = SparkSession.builder().
       config("spark.serializer", classOf[KryoSerializer].getName).
-      master("local[*]").
       getOrCreate()
 
     val (docTermMatrix, termIds, docIds, idfs): (DataFrame, Array[String], Map[Long, String], Array[Double]) = getData(spark)

@@ -32,14 +32,16 @@ object XmlToParquetWriter extends App{
   // parse arguments:
   // usage: input-path output-path [num partitions]
   // the partitions argument will determine the number of output files
-  val partitions = if (args.length > 0) args(0).toInt else -1
-  
+  val numDocs = if (args.length > 0) args(0).toInt else -1
+  val partitions = if (args.length > 1) args(1).toInt else -1
+
   val spark = SparkSession.builder().master("local[*]").getOrCreate()
   
   val assembleMatrix = new AssembleDocumentTermMatrix(spark)
   import assembleMatrix._
   
   var docTexts: Dataset[(String, String)] = parseWikipediaDump(bda.lsa.wikidumpPath)
+  if(numDocs > 0) docTexts = docTexts.limit(numDocs)
   if(partitions > 0) docTexts = docTexts.coalesce(partitions)
 
   /* uncomment this for parquet */
