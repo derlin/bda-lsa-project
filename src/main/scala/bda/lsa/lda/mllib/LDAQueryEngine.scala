@@ -14,7 +14,7 @@ import org.apache.spark.sql.{Row, SparkSession}
 class LDAQueryEngine(model: DistributedLDAModel, data: Data) {
 
   val docIdTitleRDD: RDD[(Long, String)] = data.docIdsLookup.rdd.map {
-    case Row(id: Int, title: String) => (id, title)
+    case Row(id: Long, title: String) => (id, title)
   }
 
 
