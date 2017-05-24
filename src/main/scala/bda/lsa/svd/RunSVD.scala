@@ -1,6 +1,6 @@
 package bda.lsa.svd
 
-import bda.lsa.{baseDir, docTermMatrixToCorpusRDD, getData}
+import bda.lsa.{Data, baseDir, docTermMatrixToCorpusRDD, getData}
 import org.apache.spark.mllib.linalg.distributed.RowMatrix
 import org.apache.spark.mllib.linalg.{Matrix, SingularValueDecomposition => mllib_SingularValueDecomposition, Vector => mllib_Vector, Vectors => mllib_Vectors}
 import org.apache.spark.rdd.RDD
@@ -23,8 +23,8 @@ object RunSVD {
       config("spark.serializer", classOf[KryoSerializer].getName).
       getOrCreate()
 
-    val (docTermMatrix, termIds, docIds, idfs): (DataFrame, Array[String], Map[Long, String], Array[Double]) = getData(spark)
-    val corpus: RDD[(Long, (mllib_Vector, String))] = docTermMatrixToCorpusRDD(spark, docTermMatrix)
+    val data: Data = getData(spark)
+    val corpus: RDD[(Long, (mllib_Vector, String))] = docTermMatrixToCorpusRDD(spark, data.dtm)
 
     val vecRDD = corpus.map(_._2._1)
     vecRDD.cache()

@@ -36,9 +36,9 @@ object RunLDA {
     val spark = SparkSession.builder().
       config("spark.serializer", classOf[KryoSerializer].getName).
       getOrCreate()
-
-    val (docTermMatrix, termIds, docIds, idfs): (DataFrame, Array[String], Map[Long, String], Array[Double]) = getData(spark)
-    val corpus: RDD[(Long, (mllib_Vector, String))] = docTermMatrixToCorpusRDD(spark, docTermMatrix)
+    
+    val data: Data = getData(spark)
+    val corpus: RDD[(Long, (mllib_Vector, String))] = docTermMatrixToCorpusRDD(spark, data.dtm)
 
     corpus.cache()
 

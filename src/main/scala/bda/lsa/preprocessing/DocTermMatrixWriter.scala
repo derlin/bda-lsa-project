@@ -24,11 +24,11 @@ object DocTermMatrixWriter extends App {
   if (mode == "orig") {
     val assembleMatrix = new AssembleDocumentTermMatrix(spark)
     val (docTermMatrix, termIds, docIds, termIdfs) = assembleMatrix.documentTermMatrix(docTexts, bda.lsa.STOPWORDS_PATH, numTerms)
-    bda.lsa.saveData(spark, docTermMatrix, termIds, docIds, termIdfs)
+    bda.lsa.saveData(Data(spark, docTermMatrix, termIds, docIds, termIdfs))
 
   } else {
     val (docTermMatrix, termIds, docIds, termIdfs) = TextToIDF.preprocess(spark, docTexts, numTerms)
-    bda.lsa.saveData(spark, docTermMatrix, termIds, docIds, termIdfs)
+    bda.lsa.saveData(Data(spark, docTermMatrix, termIds, docIds, termIdfs))
   }
-
+  
 }
