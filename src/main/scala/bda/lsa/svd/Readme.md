@@ -24,7 +24,7 @@ where :
 			each row represents a term
 			each column represent a concept / topic
 
-# Compute the SVD model in Spark
+## Compute the SVD model in Spark
 To perform the singular value decomposition, we represent the matrix `M` as an RDD of row vectors (all of that in a `org.apache.spark.mllib.linalg.distributed.`RowMatrix[1] object). We use it's `computeSVD` method.The returned `org.apache.spark.mllib.linalg.`SingularValueDecomposition[2] object allows to retreive the coefficients matrix :
 
 ```
@@ -38,6 +38,13 @@ Notice :
  * The V matrix is already transposed (should be called V' to be mathematicaly right)
 
 
-# Querying the SVD model
+## Querying the SVD model
 
-asdas
+As it is mentioned above, the V Matrix's rows represent the terms and the columns represent the concept / topics. We can see this matrix as the representation of concepts through terms that are relevant for this concept. The value of each term represent its relevance for the concept.
+
+To find the relevant terms to a concepts, we have to extract the maximum values in the concept column (and limit / take the number of desired terms)
+
+To find 
+
+. The value at each position can be interpreted as the rele‐
+vance of that term to that concept.
