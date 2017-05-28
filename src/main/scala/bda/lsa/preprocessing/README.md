@@ -1,6 +1,6 @@
-# LDA executions
+# Pre-processing
 
-We executed our whole pipeline multiple times.
+In order to get satisfying results, we have to do some pre-processing on the raw data.
 This file presents what we did and the results we got :
 
 ## Execution with 1520 documents
@@ -13,7 +13,18 @@ We downloaded an XML version of 1520 pages on the [Special:Export](https://en.wi
 It lets us choose exactly what pages we want to extract.
 We built a subset using the pages contained in the following categories :
 
-- 
+- Computer Engineering, data mining
+- Music by genre
+- Philosophy: happiness, euphoriants, pleasure, concepts
+- Politics: activism
+- Communication studies, Communication theory, media studies
+- Urban_legends, Internet_memes (partial)
+- Terrorism
+- Swiss society
+- Emotions
+- Cephalopods, cats in popular cultures
+
+The full list of pages is available in the `/other` directory [here](../../../../../../other/wikiexport-articles-1500.txt).
 
 ### Execution 1
 
