@@ -67,7 +67,7 @@ __Example of pipeline__
         
 8. Optionally, use the querier in the shell:
 
-        val q = new bda.lsa.svd.SVDQueryEngine(spark, data)
+        val q = new bda.lsa.svd.SVDQueryEngine(model, data)
    
    
    
