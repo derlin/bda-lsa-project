@@ -27,7 +27,13 @@ object RunLDA {
     // Typical value is (50 / nbTopics)
     val beta = if (args.length > 3) args(3).toInt else -1
     // Typical value is either 0.1 or (200 / vocabularySize)
+    val optimizerAlgorithm = "online"
+
+    // We tried to use the 'online' algorithm, but the problem is that he's only able to run locally. Which means huge
+    // performance cuts when running it, so we decided to not use it at all and disable that option.
+    /*
     val optimizerAlgorithm = if (args.length > 4) args(4).toLowerCase else "em" // Either "em" or "online"
+     */
 
     val optimizer = optimizerAlgorithm.toLowerCase match {
       case "em" => new mllib_EMLDAOptimizer
@@ -44,19 +50,19 @@ object RunLDA {
 
     corpus.cache()
 
-    val LDA = new mllib_LDA()
-
     val model: mllib_DistributedLDAModel =
       new mllib_LDA().
         setOptimizer(optimizer).
         setAlpha(alpha).
         setBeta(if (beta > 0) beta else (200.0 / data.termIds.length) + 1).
         setK(k).
+        setMaxIterations(maxIterations).
         run(corpus.mapValues(_._1)).
         asInstanceOf[mllib_DistributedLDAModel]
 
     // to load it back, use val model = DistributedLDAModel.load(sc, "XXX/mllib-lda-model")
     saveModel(spark, model)
+
   }
 
   // -----------------

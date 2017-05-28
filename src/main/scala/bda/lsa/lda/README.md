@@ -1,37 +1,32 @@
-# LDA executions
+# Running LDA
 
-We executed our whole pipeline multiple times.
-This file presents what we did and the results we got :
+LDA stands for *Latent Dirichelet Allocation*.
+It is a generative probabilistic model that is used in natural language processing.
 
-## Execution with 1520 documents
-We arbitrarily selected a total of 1520 Wikipedia documents.
+## LDA Principle
+LDA is a generative model, meaning its first function is to randomly generate observable results, for example to simulate values of a model.
+By using the mathematical model, we can go "backwards" and take real life measures to find a corresponding model that generates it best.
 
-Here are the different steps we executed :
+That's what we're doing here, using words from Wikipedia articles as observations (called 'Documents'), and trying to group these words and documents into topics.
 
-### Input
-We downloaded an XML version of 1520 pages on the [Special:Export](https://en.wikipedia.org/wiki/Special:Export) page of Wikipedia.
-It lets us choose exactly what pages we want to extract.
-We built a subset using the pages contained in the following categories :
+This image represents the construction of an LDA model visually by using its parameters :
 
-- 
+![Latent Dirichlet Allocation in plate diagram](Latent_Dirichlet_allocation.png)
+Source : [https://commons.wikimedia.org/wiki/File:Latent_Dirichlet_allocation.svg](https://commons.wikimedia.org/wiki/File:Latent_Dirichlet_allocation.svg)
 
-### Tokenizing
-We chose to use `org.apache.spark.ml.feature.Tokenizer` to tokenize our input.  
-We got a total of **2'712'636 tokens**, of which 201'563 are unique.  
-This makes for an average of **1'784 tokens per document**, of which 694 are unique.
+*α*, *β* are explained in the next paragraph. *M* represents all documents of the corpus, *N* represents the words within a particular document. **
 
-### Removing stop words
-We then removed all the stopwords we found from that set.  
-We got a total of **1'722'062 tokens**, of which 201'427 are unique.  
-That means we removed the occurences of 156 stopwords.  
-This makes for an average of **1'133 tokens per document**. of which 638 are unique.
+## LDA Parameters
+LDA uses some values that should be changed in order to fit to the chosen situation.
+Here they are :
 
-### Lemmatizing
-After this, we lemmatized the results.  
-We got a total of **X tokens**, of which X are unique.
-This makes for an average of **X tokens per document**. of which XS are unique.
+- **K**, which is `k` in our code. Represents the number of topics.
+- **V**, which is `` in our code. Represents the vocabulary size.
+- **M**, which is `1520` in our executions. Represents the total number of documents.
+- **α**, which is `alpha` in our code. Parameter of the Dirichelet prior, that represents the concentration of expected topics per document.
+- **β**, which is `beta` in out code. Parameter of the Dirichelet prior, that represents the concentration of expected words per topic.
 
-### Filtering
-We only kept words that are composed of only letters, and of length at least two.
-We got a total of **1'458'090 tokens**, of which 70'638 are unique.  
-This makes for an average of **960 tokens per document**, of which 439 are unique.
+## Our usage
+In our case we'll use it to retrieve concepts from Wikipedia articles.
+That means we'll be using the model not by generating documents, but rather by analysing the collection we have and try to infer what are the common topics of a set of them.
+We'll then try to show interesting statistics about the topics we found.
