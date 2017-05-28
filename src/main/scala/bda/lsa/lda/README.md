@@ -1,4 +1,4 @@
-# Running LDA
+# LDA explained
 
 LDA stands for *Latent Dirichelet Allocation*.
 It is a generative probabilistic model that is used in natural language processing.
