@@ -24,8 +24,8 @@ where :
 			each row represents a term
 			each column represent a concept / topic
 
-
-To perform the singular value decomposition, we represent the matrix `M` as an RDD of row vectors (all of that in a RowMatrix[1] object). We use it's `computeSVD` method.The returned SingularValueDecomposition[2] object allows to retreive the coefficients matrix :
+# Compute the SVD model in Spark
+To perform the singular value decomposition, we represent the matrix `M` as an RDD of row vectors (all of that in a `org.apache.spark.mllib.linalg.distributed.`RowMatrix[1] object). We use it's `computeSVD` method.The returned `org.apache.spark.mllib.linalg.`SingularValueDecomposition[2] object allows to retreive the coefficients matrix :
 
 ```
 val u = svd.U
@@ -38,6 +38,6 @@ Notice :
  * The V matrix is already transposed (should be called V' to be mathematicaly right)
 
 
-[1] org.apache.spark.mllib.linalg.distributed.RowMatrix
+# Querying the SVD model
 
-[2] org.apache.spark.mllib.linalg.SingularValueDecomposition
+asdas
