@@ -40,6 +40,15 @@ We only kept words that are composed of only letters, and of length at least two
 We got a total of **1'458'090 tokens**, of which 70'638 are unique.  
 This makes for an average of **960 tokens per document**, of which 439 are unique.
 
+Here is a table summarizing these informations :
+
+|                    	|    Tokens 	|  Unique 	| Tokens/document 	| Unique/document 	|
+|--------------------	|----------:	|--------:	|----------------:	|----------------:	|
+| Tokenizing         	| 2'712'636 	| 201'563 	|           1'784 	|             694 	|
+| Removing Stopwords 	| 1'722'062 	| 201'427 	|           1'133 	|             638 	|
+| Lemmatizing        	| 2'021'543 	| 109'995 	|           1'399 	|             518 	|
+| Filtering          	| 1'458'090 	|  70'638 	|             960 	|             439 	|
+
 ### Other stats
 
 We have 1'519 / 1'520 documents that contain at least 1 term.
