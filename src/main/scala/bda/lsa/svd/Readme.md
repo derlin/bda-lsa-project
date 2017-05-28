@@ -47,4 +47,6 @@ To find the most relevant terms to a concepts, we have to extract the maximum va
 
 ### TopDocumentByConcept
 The V matrix is quite similar to the `U matrix` except that it represents the `link between the documents and the concepts`. The value of each document represent its relevance for the concept.
-To find the most relevant documents for a concept, the query is similar than the TopTermsByConcept. Thus, we have to extract the maximum values in the concept column (and limit the result to the number of desired documents). We can apply this query to each concept to obtain the most relevant documents.
+To find the most relevant documents for a concept, the query is similar than the TopTermsByConcept. Thus, we have to extract the maximum values in the concept column (and limit the result to the number of desired documents).
+
+We can apply this query to each concept to obtain the most relevant `group of documents`.
