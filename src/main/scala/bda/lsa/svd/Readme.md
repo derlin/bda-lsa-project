@@ -50,3 +50,8 @@ The V matrix is quite similar to the `U matrix` except that it represents the `l
 To find the most relevant documents for a concept, the query is similar than the TopTermsByConcept. Thus, we have to extract the maximum values in the concept column (and limit the result to the number of desired documents).
 
 We can apply this query to each concept to obtain the most relevant `group of documents`.
+
+### TopTermsByTerm
+This request is a bit more tricky and requires a deeper understanding of LSA. LSA represents the term-term relation as the cosine similarity of their two columns, in the reconstructed M matrix (approximation of M obtained by multiplying U, S and V together). In fact, we don't need to compute the approximation of M. We can use some algebric properties instead : it's consine similarity is exactly the same for between the comlumns of the matrixes S and V that we already have.
+
+What we have to do is to normalize to 1 each row in both matrix. Then multiply the normalized row corresponding to that term by the query term. The result is the vector of similarity term -> query term. If we apply this query for each terms (except the term itself), we'll obtain the `term to terms relevance`.
