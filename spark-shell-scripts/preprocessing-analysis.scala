@@ -157,5 +157,13 @@ val docTermMatrix = idfModel.transform(docTermFreqs).select("title", "tfidfVec")
 val termsRDD = wordsFiltered.select("terms").flatMap(r => r.getAs[mutable.WrappedArray[String]](0)).map(s => (s, 1)).rdd
 termsRDD.reduceByKey(_ + _).sortBy(-_._2)
 
+// get idf
+val dfRDD = wordsFiltered.select("terms").
+  flatMap(r => r.getAs[mutable.WrappedArray[String]](0).distinct).
+  map(s => (s, 1)).rdd
+dfRDD.reduceByKey(_ + _).sortBy(-_._2)
+
+val joined = termsRDD.join(dfRDD)
+
 // We have some chinese terms in our vocabulary:
 // > Array[(String, Int)] = Array((ﬂow,4), (ﬁrst,1), (ﬁnding,1), (ﬁeld,1), (카더라,1), (강남스타일,2), (ꜣbst,1), (黃婉卿,1), (馬蹄鞋,1), (香港電視專業人員協會,1), (香港華人西醫書まりこ現象,3), (電影電視工程師協會香港分會,1), (雪婆んご,1), (雑踏の中で,1), (長前臂,1), (鍾華亮,1), (醤油入れ,1), (過去ログ集,1), (週刊朝日,4), (週刊文春,2), (週刊平凡,3), (转账sty,1), (花盆鞋,1), (自発性の精神病理,1), (自律神経ダイエット,3), (羟考酮,1), (紀曉風,1), (禮樂制度,1), (現代妖怪,2), (猿似猴,1), (港人怒吼為李旺陽呼冤,1), (消防style,1), (活字探偵団,1, (本当にいる日本の,2), (本屋に行くと催すのはなぜ,2), (本屋と便意の謎,1), (本屋で急に便意を感じる,1), (本屋でトイレに行きたくなる,3), (本の雑誌,32), (書便派,1), (日本の都市伝説,1), 钗,1), (弁而釵,1), (廣播工程師協會香港分會,1), (孫中山,1), (好引氣也,1), (大而黑,1), (大國小器人權排名尾三,1...

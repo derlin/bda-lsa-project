@@ -2,16 +2,11 @@ package bda.lsa.svd
 
 
 import bda.lsa.Data
-import bda.lsa.preprocessing.AssembleDocumentTermMatrix
 import breeze.linalg.{DenseMatrix => BDenseMatrix, SparseVector => BSparseVector}
 import org.apache.spark.mllib.linalg.{Matrices, Matrix, SingularValueDecomposition, Vectors, Vector => MLLibVector}
-import org.apache.spark.ml.linalg.{Vector => MLVector}
 import org.apache.spark.mllib.linalg.distributed.RowMatrix
-import org.apache.spark.serializer.KryoSerializer
-import org.apache.spark.sql.{Dataset, SparkSession}
 
 import scala.collection.Map
-import scala.collection.mutable.ArrayBuffer
 
 /**
   * date: 28.05.17
@@ -151,18 +146,18 @@ class SVDQueryEngine(val model: SingularValueDecomposition[RowMatrix, Matrix], v
     allDocWeights.top(10)
   }
 
-  def printTopTermsForTerm(term: String): Unit = {
-    val idWeights = topTermsForTerm(idTerms(term))
+  def printTopTermsForTerm(term: Int): Unit = {
+    val idWeights = topTermsForTerm(term)
     println(idWeights.map { case (score, id) => (data.termIds(id), score) }.mkString(", "))
   }
 
-  def printTopDocsForDoc(doc: String): Unit = {
-    val idWeights = topDocsForDoc(idDocs(doc))
+  def printTopDocsForDoc(doc: Int): Unit = {
+    val idWeights = topDocsForDoc(doc)
     println(idWeights.map { case (score, id) => (data.docIds(id), score) }.mkString(", "))
   }
 
-  def printTopDocsForTerm(term: String): Unit = {
-    val idWeights = topDocsForTerm(idTerms(term))
+  def printTopDocsForTerm(term: Int): Unit = {
+    val idWeights = topDocsForTerm(term)
     println(idWeights.map { case (score, id) => (data.docIds(id), score) }.mkString(", "))
   }
 
@@ -171,3 +166,4 @@ class SVDQueryEngine(val model: SingularValueDecomposition[RowMatrix, Matrix], v
     val idWeights = topDocsForTermQuery(queryVec)
     println(idWeights.map { case (score, id) => (data.docIds(id), score) }.mkString(", "))
   }
+}
