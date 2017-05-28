@@ -11,7 +11,8 @@ That's what we're doing here, using words from Wikipedia articles as observation
 
 This image represents the construction of an LDA model visually by using its parameters :
 
-![Latent Dirichlet Allocation in plate diagram](Latent_Dirichlet_allocation.png =300x)  
+![Latent Dirichlet Allocation in plate diagram](Latent_Dirichlet_allocation.png)
+
 Source : [https://commons.wikimedia.org/wiki/File:Latent_Dirichlet_allocation.svg](https://commons.wikimedia.org/wiki/File:Latent_Dirichlet_allocation.svg)
 
 *α*, *β* are explained in the next paragraph. *M* represents all documents of the corpus, *N* represents the words within a particular document. **
