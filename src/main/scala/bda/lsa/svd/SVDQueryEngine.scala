@@ -171,3 +171,4 @@ class SVDQueryEngine(val model: SingularValueDecomposition[RowMatrix, Matrix], v
     val idWeights = topDocsForTermQuery(queryVec)
     println(idWeights.map { case (score, id) => (data.docIds(id), score) }.mkString(", "))
   }
+}
