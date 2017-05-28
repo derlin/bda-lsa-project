@@ -40,11 +40,11 @@ Notice :
 
 ## Querying the SVD model
 
-As it is mentioned above, the V Matrix's rows represent the terms and the columns represent the concept / topics. We can see this matrix as the representation of concepts through terms that are relevant for this concept. The value of each term represent its relevance for the concept.
+### TopTermsByConcept
+As it is mentioned above, the rows of the `V Matrix` rows represent the terms, and its columns represent the concept / topics. We can see this matrix as the representation of concepts, through terms that are relevant for this concept. In other words, it represents the `link between the terms and the concepts`. The value of each term represent its relevance for the concept.
 
-To find the relevant terms to a concepts, we have to extract the maximum values in the concept column (and limit / take the number of desired terms)
+To find the most relevant terms to a concepts, we have to extract the maximum values in the concept column (and limit the result to the number of desired terms). If we apply this query to each concept, we obtain the most relevant terms.
 
-To find 
-
-. The value at each position can be interpreted as the rele‐
-vance of that term to that concept.
+### TopDocumentByConcept
+The V matrix is quite similar to the `U matrix` except that it represents the `link between the documents and the concepts`. The value of each document represent its relevance for the concept.
+To find the most relevant documents for a concept, the query is similar than the TopTermsByConcept.
