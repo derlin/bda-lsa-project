@@ -59,3 +59,7 @@ What we have to do is to normalize to 1 each row in both matrix (S and V). Then 
 
 ### TopDocumentsByDocument
 The idea is exactly the same for the documents by document request, instead that we have to compute the normalized matrixes `U and V`. Then we'll multiply the normalized row to that document by the query document.
+
+
+### TopDocumentByTerm
+TODO
