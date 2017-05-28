@@ -34,10 +34,8 @@ val v = svd.V
 ```
 
 Notice :
- * The svd algorithm requires to iterate over the matrix multiple times. It is importand to cache the RDD before processing.
+ * The svd algorithm `computeSVD` method requires to iterate over the matrix multiple times. It is importand to cache the RDD before processing.
  * The V matrix is already transposed (should be called V' to be mathematicaly right)
-
-
 
 
 [1] org.apache.spark.mllib.linalg.distributed.RowMatrix
