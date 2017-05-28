@@ -74,7 +74,7 @@ object RunSVD {
     val vs : Array[mllib_Vector] = spark.sparkContext.objectFile[mllib_Vector](baseDir + pathSuffix + "/V").collect
     val numRows = vs.length
     val numCols = vs(0).toArray.length
-    val V: Matrix = org.apache.spark.mllib.linalg.Matrices.dense(numRows, numCols, vs.map(_.toArray).flatten)
+    val V: Matrix = org.apache.spark.mllib.linalg.Matrices.dense(numRows, numCols, vs.flatMap(_.toArray))
 
     new mllib_SingularValueDecomposition[RowMatrix, Matrix](U, s, V)
   }

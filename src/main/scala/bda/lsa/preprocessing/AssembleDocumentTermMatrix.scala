@@ -23,11 +23,12 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 
 class AssembleDocumentTermMatrix(private val spark: SparkSession) extends Serializable {
+
   import spark.implicits._
 
   /**
-   * Returns a (title, content) pair.
-   */
+    * Returns a (title, content) pair.
+    */
   def wikiXmlToPlainText(pageXml: String): Option[(String, String)] = {
     val page = new EnglishWikipediaPage()
 
@@ -38,7 +39,8 @@ class AssembleDocumentTermMatrix(private val spark: SparkSession) extends Serial
 
     WikipediaPage.readPage(page, hackedPageXml)
     if (page.isEmpty || !page.isArticle || page.isRedirect || page.isDisambiguation ||
-        page.getTitle.contains("(disambiguation)")) {
+      page.getTitle.contains("(disambiguation)") ||
+      page.getTitle.matches("^((List)|(Category)|(Template))")) {
       None
     } else {
       Some((page.getTitle, page.getContent))
@@ -57,8 +59,8 @@ class AssembleDocumentTermMatrix(private val spark: SparkSession) extends Serial
   }
 
   /**
-   * Create a StanfordCoreNLP pipeline object to lemmatize documents.
-   */
+    * Create a StanfordCoreNLP pipeline object to lemmatize documents.
+    */
   def createNLPPipeline(): StanfordCoreNLP = {
     val props = new Properties()
     props.put("annotators", "tokenize, ssplit, pos, lemma")
@@ -70,7 +72,7 @@ class AssembleDocumentTermMatrix(private val spark: SparkSession) extends Serial
   }
 
   def plainTextToLemmas(text: String, stopWords: Set[String], pipeline: StanfordCoreNLP)
-    : Seq[String] = {
+  : Seq[String] = {
     val doc = new Annotation(text)
     pipeline.annotate(doc)
     val lemmas = new ArrayBuffer[String]()
@@ -101,13 +103,13 @@ class AssembleDocumentTermMatrix(private val spark: SparkSession) extends Serial
   }
 
   /**
-   * Returns a document-term matrix where each element is the TF-IDF of the row's document and
-   * the column's term.
-   *
-   * @param docTexts a DF with two columns: title and text
-   */
+    * Returns a document-term matrix where each element is the TF-IDF of the row's document and
+    * the column's term.
+    *
+    * @param docTexts a DF with two columns: title and text
+    */
   def documentTermMatrix(docTexts: Dataset[(String, String)], stopWordsFile: String, numTerms: Int)
-    : (DataFrame, Array[String], Map[Long, String], Array[Double]) = {
+  : (DataFrame, Array[String], Map[Long, String], Array[Double]) = {
     val terms = contentsToTerms(docTexts, stopWordsFile) // corresponds to the "lemmatized" variable in the book
 
     val termsDF = terms.toDF("title", "terms")
@@ -123,7 +125,8 @@ class AssembleDocumentTermMatrix(private val spark: SparkSession) extends Serial
 
     docTermFreqs.cache()
 
-    val docIds = docTermFreqs.rdd.map(_.getString(0)).zipWithUniqueId().map(_.swap).collect().toMap
+    // https://groups.google.com/a/lists.datastax.com/forum/#!topic/spark-connector-user/BAsDx7TPS18
+    val docIds = docTermFreqs.rdd.map(r => r.getString(0)).zipWithUniqueId().map(_.swap).collect().toMap
 
     val idf = new IDF().setInputCol("termFreqs").setOutputCol("tfidfVec")
     val idfModel = idf.fit(docTermFreqs)

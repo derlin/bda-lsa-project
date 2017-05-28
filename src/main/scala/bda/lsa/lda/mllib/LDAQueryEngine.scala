@@ -24,16 +24,16 @@ class LDAQueryEngine(model: DistributedLDAModel, data: Data) {
       map { topic => topic._1.map(data.termIds(_)) }
   }
 
-  def topTopicsForDocument(id: Long, numTopics: Int = 10): Array[Int] = {
-    model.topTopicsPerDocument(numTopics).filter(_._1 == id).map(_._2.toArray).first
+  def topTopicsForDocument(id: Long, numTopics: Int = 10): Array[(Int,Double)] = {
+    model.topTopicsPerDocument(numTopics).filter(_._1 == id).map(r => r._2 zip r._3).first
   }
 
   def topDocumentsForTopic(tid: Int, numDocs: Int = 10) = {
     val topDocs = model.topDocumentsPerTopic(numDocs)(tid)
     data.spark.sparkContext.
-      parallelize(topDocs._1.zipWithIndex).
+      parallelize(topDocs._1.zip(topDocs._2)).
       join(docIdTitleRDD).
-      mapValues(_._2).
+      sortBy(_._2._1, ascending = false).
       collect()
   }
 

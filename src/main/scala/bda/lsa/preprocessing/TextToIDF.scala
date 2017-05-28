@@ -30,19 +30,25 @@ object TextToIDF {
 
     // remove articles with less than 2 relevant words
     val filtered = words.where(size($"terms") > 1)
-    filtered.cache()
-    
+    //filtered.cache()
+
+    println(s"filtered done. Num docs: ${filtered.count()}")
     // count terms
     val countVectorizer = new CountVectorizer().
+      setMinDF(2).
+      setMinTF(2).
       setInputCol("terms").
       setOutputCol("termFreqs").
       setVocabSize(numTerms)
 
+    println("creating vocabulary model.")
     val vocabModel = countVectorizer.fit(filtered)
+    println("fitting vocabulary model.")
     val docTermFreqs = vocabModel.transform(filtered)
     docTermFreqs.cache()
 
     // apply TF-IDF
+    println("applying TF-IDF.")
     val idf = new IDF().setInputCol("termFreqs").setOutputCol("tfidfVec")
     val idfModel = idf.fit(docTermFreqs)
     val docTermMatrix = idfModel.transform(docTermFreqs).select("title", "tfidfVec")
@@ -50,6 +56,7 @@ object TextToIDF {
 
     val docIds = docTermFreqs.rdd.map(_.getString(0)).zipWithUniqueId().map(_.swap).collect().toMap
 
+    println("matrix generated.")
     (docTermMatrix, vocabModel.vocabulary, docIds, idfModel.idf.toArray)
   }
 
