@@ -1,5 +1,6 @@
 package bda.lsa.preprocessing
 
+import bda.lsa.book.AssembleDocumentTermMatrix
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 
 // author: Lucy Linder <lucy.derlin@gmail.com>

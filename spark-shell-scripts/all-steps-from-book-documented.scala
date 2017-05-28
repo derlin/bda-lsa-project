@@ -14,6 +14,7 @@
 
 import java.util.Properties
 
+import bda.lsa.book.RunLSA
 import edu.stanford.nlp.ling.CoreAnnotations.{LemmaAnnotation, SentencesAnnotation, TokensAnnotation}
 import edu.stanford.nlp.pipeline.{Annotation, StanfordCoreNLP}
 import edu.umd.cloud9.collection.XMLInputFormat
@@ -337,7 +338,7 @@ topConceptTerms(0).map(_._1).mkString(", ")
 
 // Result: _stub, motherboard, slang, neutrality, peer, browse, disciplined, quantifiable, computerized, tank_
 
-val topTermsForConcepts = bda.lsa.RunLSA.topTermsInTopConcepts(svd, 1, 5, vocabModel.vocabulary)
+val topTermsForConcepts = RunLSA.topTermsInTopConcepts(svd, 1, 5, vocabModel.vocabulary)
 topTermsForConcepts.foreach(s => {
   println("TOPIC:")
   s.foreach { case (term, weight) =>

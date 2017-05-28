@@ -41,22 +41,18 @@ package object lsa {
   /**
     * Create an RDD corpus from the docTermMatrix. This is useful for SVD and MLLIB_LDA.
     *
-    * @param spark         the current sparkSession
-    * @param docTermMatrix the docTermMatrix dataset (see [[getData]])
-    * @param featuresCol   (optional) the tfidfVec vectors column, default to `tfidfVec`
-    * @param titleCol      (optional) the document title column, default to `title`
+    * @param spark the current sparkSession
+    * @param data  the data
     * @return a PairRDD (id, (freqs-vector, title)): the key corresponds to the document's id (its row index in docTermMatrix),
     *         the value is a tuple made of the term frequencies (tfidfVec) as mllib.Vectors and the document's title.
     */
-  def docTermMatrixToCorpusRDD(spark: SparkSession, docTermMatrix: DataFrame, featuresCol: String = "tfidfVec", titleCol: String = "title"):
+  def docTermMatrixToCorpusRDD(spark: SparkSession, data: Data):
   RDD[(Long, (mllib_Vector, String))] = {
     import spark.implicits._
-    docTermMatrix.
+    data.dtm.
       select("tfidfVec", "title").
-      map { r => (Vectors.fromML(r.getAs[MLVector](0)), r.getAs[String](1)) }.
-      rdd.
-      zipWithIndex.
-      map(_.swap)
+      map { case Row(v: MLVector, t: String) => (data.docIdsLookup(t), (Vectors.fromML(v), t)) }.
+      rdd
   }
 
   /**
@@ -92,9 +88,7 @@ package object lsa {
     import spark.implicits._
     val docTermMatrix = spark.sqlContext.read.parquet(wikidumpMatrixPath + "/docTermMatrix")
     val termIds = spark.sqlContext.read.parquet(wikidumpMatrixPath + "/termIds").map(_.getAs[String](0)).collect
-    val docIds = spark.sqlContext.read.parquet(wikidumpMatrixPath + "/docIds").map {
-      r => (r.getAs[Long](0), r.getAs[String](1))
-    }.collect.toMap
+    val docIds = spark.sqlContext.read.parquet(wikidumpMatrixPath + "/docIds").map(_.getAs[String](0)).collect
     val idfs = spark.sqlContext.read.parquet(wikidumpMatrixPath + "/idfs").map(_.getAs[Double](0)).collect
 
     Data(spark, docTermMatrix, termIds, docIds, idfs)

@@ -13,7 +13,6 @@ object DocTermMatrixWriter extends App {
   val numTerms = if (args.length > 0) args(0).toInt else 2000
   val percent = if (args.length > 1) args(1).toFloat else -1
   val numDocs = if (args.length > 2) args(2).toInt else -1
-  val mode = if (args.length > 3 && args(3).startsWith("orig")) "orig" else "mine" // mine or orig
 
   val spark = SparkSession.builder().appName("DocTermMatrixWriter").getOrCreate()
 
@@ -35,17 +34,10 @@ object DocTermMatrixWriter extends App {
     }
   } 
 
-  if (mode == "orig") {
-    println("preprocess using orig")
-    val assembleMatrix = new AssembleDocumentTermMatrix(spark)
-    val (docTermMatrix, termIds, docIds, termIdfs) = assembleMatrix.documentTermMatrix(filtered, bda.lsa.STOPWORDS_PATH, numTerms)
-    bda.lsa.saveData(Data(spark, docTermMatrix, termIds, docIds, termIdfs))
-
-  } else {
-    println("preprocess using mine")
+    println("preprocess using spark-nlp")
     val (docTermMatrix, termIds, docIds, termIdfs) = TextToIDF.preprocess(spark, filtered, numTerms)
     bda.lsa.saveData(Data(spark, docTermMatrix, termIds, docIds, termIdfs))
-  }
+
 
   def filterTitles(spark: SparkSession, docTexts: Dataset[(String, String)]) = {
     import org.apache.spark.sql.functions._

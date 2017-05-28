@@ -27,7 +27,7 @@ object RunLDA {
     // Typical value is (50 / nbTopics)
     val beta = if (args.length > 3) args(3).toInt else -1
     // Typical value is either 0.1 or (200 / vocabularySize)
-    val optimizerAlgorithm = "online"
+    val optimizerAlgorithm = "em"
 
     // We tried to use the 'online' algorithm, but the problem is that he's only able to run locally. Which means huge
     // performance cuts when running it, so we decided to not use it at all and disable that option.
@@ -46,7 +46,7 @@ object RunLDA {
       getOrCreate()
 
     val data: Data = getData(spark)
-    val corpus: RDD[(Long, (mllib_Vector, String))] = docTermMatrixToCorpusRDD(spark, data.dtm)
+    val corpus: RDD[(Long, (mllib_Vector, String))] = docTermMatrixToCorpusRDD(spark, data)
 
     corpus.cache()
 

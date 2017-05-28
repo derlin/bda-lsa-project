@@ -11,7 +11,7 @@ object TextToIDF {
 
 
   def preprocess(spark: SparkSession, docTexts: Dataset[(String, String)], numTerms: Int)
-  : (DataFrame, Array[String], Map[Long, String], Array[Double]) = {
+  : (DataFrame, Array[String], Array[String], Array[Double]) = {
     import spark.implicits._
     import org.apache.spark.sql.functions._
     import com.databricks.spark.corenlp.functions._
@@ -30,7 +30,7 @@ object TextToIDF {
 
     // remove articles with less than 2 relevant words
     val filtered = words.where(size($"terms") > 1)
-    //filtered.cache()
+    filtered.cache()
 
     println(s"filtered done. Num docs: ${filtered.count()}")
     // count terms
@@ -54,7 +54,7 @@ object TextToIDF {
     val docTermMatrix = idfModel.transform(docTermFreqs).select("title", "tfidfVec")
 
 
-    val docIds = docTermFreqs.rdd.map(_.getString(0)).zipWithUniqueId().map(_.swap).collect().toMap
+    val docIds = docTermFreqs.rdd.map(_.getString(0)).collect
 
     println("matrix generated.")
     (docTermMatrix, vocabModel.vocabulary, docIds, idfModel.idf.toArray)

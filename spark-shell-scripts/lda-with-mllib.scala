@@ -6,7 +6,7 @@
 
 // https://s3.amazonaws.com/sparksummit-share/ml-ams-1.0.1/wiki-lda/scala/wiki-lda_answers.html
 // http://lamastex.org/courses/ScalableDataScience/2016/S1/week7/14_ProbabilisticTopicModels/025_LDA_20NewsGroupsSmall.html
-import bda.lsa.preprocessing.AssembleDocumentTermMatrix
+import bda.lsa.book.AssembleDocumentTermMatrix
 import org.apache.spark.sql.Dataset
 import org.apache.spark.mllib.linalg.{Vectors, Vector => MLLibVector}
 import org.apache.spark.ml.linalg.{Vector => MLVector}

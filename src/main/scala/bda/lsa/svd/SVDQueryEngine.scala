@@ -22,7 +22,7 @@ class SVDQueryEngine(val model: SingularValueDecomposition[RowMatrix, Matrix], v
   val normalizedUS: RowMatrix = distributedRowsNormalized(US)
 
   val idTerms: Map[String, Int] = data.termIds.zipWithIndex.toMap
-  val idDocs: Map[String, Long] = data.docIds.map(_.swap)
+  val idDocs: Map[String, Long] = data.docIds.zipWithIndex.map{ case (t1, t2) => (t1, t2.toLong)}.toMap
 
   /**
     * Finds the product of a dense matrix and a diagonal matrix represented by a vector.
@@ -45,6 +45,28 @@ class SVDQueryEngine(val model: SingularValueDecomposition[RowMatrix, Matrix], v
       Vectors.dense(newArr)
     })
   }
+
+  def describeTopicsWithWords(numTerms: Int = 10) = {
+    model.V.transpose.rowIter.map {
+      case v: MLLibVector => v.toArray.
+        zipWithIndex.
+        sortBy(-_._1).
+        take(numTerms).
+        map(t => data.termIds(t._2))
+    }.toArray
+  }
+
+  def topTermsForTopic(k: Int, numTerms: Int = 10) = {
+    val termWeights = model.V.transpose.rowIter.slice(k, k + 1).toArray
+    val sorted = termWeights(0).toArray.zipWithIndex.sortBy(-_._1)
+    sorted.take(numTerms)
+  }
+
+  def topDocumentsForTopic(tid: Int, numDocs: Int = 10) = {
+    val docWeights = model.U.rows.map(_.toArray(tid)).zipWithIndex
+    docWeights.top(numDocs)
+  }
+
 
   /**
     * Returns a matrix where each row is divided by its length.
@@ -81,7 +103,7 @@ class SVDQueryEngine(val model: SingularValueDecomposition[RowMatrix, Matrix], v
     val docScores = US.multiply(rowVec)
 
     // Find the docs with the highest scores
-    val allDocWeights = docScores.rows.map(_.toArray(0)).zipWithUniqueId
+    val allDocWeights = docScores.rows.map(_.toArray(0)).zipWithIndex
     allDocWeights.top(10)
   }
 
@@ -106,14 +128,14 @@ class SVDQueryEngine(val model: SingularValueDecomposition[RowMatrix, Matrix], v
     */
   def topDocsForDoc(docId: Long): Seq[(Double, Long)] = {
     // Look up the row in US corresponding to the given doc ID.
-    val docRowArr = normalizedUS.rows.zipWithUniqueId.map(_.swap).lookup(docId).head.toArray
+    val docRowArr = normalizedUS.rows.zipWithIndex.map(_.swap).lookup(docId).head.toArray
     val docRowVec = Matrices.dense(docRowArr.length, 1, docRowArr)
 
     // Compute scores against every doc
     val docScores = normalizedUS.multiply(docRowVec)
 
     // Find the docs with the highest scores
-    val allDocWeights = docScores.rows.map(_.toArray(0)).zipWithUniqueId
+    val allDocWeights = docScores.rows.map(_.toArray(0)).zipWithIndex
 
     // Docs can end up with NaN score if their row in U is all zeros.  Filter these out.
     allDocWeights.filter(!_._1.isNaN).top(10)
@@ -142,7 +164,7 @@ class SVDQueryEngine(val model: SingularValueDecomposition[RowMatrix, Matrix], v
     val docScores = US.multiply(termRowVec)
 
     // Find the docs with the highest scores
-    val allDocWeights = docScores.rows.map(_.toArray(0)).zipWithUniqueId
+    val allDocWeights = docScores.rows.map(_.toArray(0)).zipWithIndex
     allDocWeights.top(10)
   }
 
@@ -151,19 +173,19 @@ class SVDQueryEngine(val model: SingularValueDecomposition[RowMatrix, Matrix], v
     println(idWeights.map { case (score, id) => (data.termIds(id), score) }.mkString(", "))
   }
 
-  def printTopDocsForDoc(doc: Int): Unit = {
+  def printTopDocsForDoc(doc: Long): Unit = {
     val idWeights = topDocsForDoc(doc)
-    println(idWeights.map { case (score, id) => (data.docIds(id), score) }.mkString(", "))
+    println(idWeights.map { case (score, id) => (data.docIds(id.toInt), score) }.mkString(", "))
   }
 
   def printTopDocsForTerm(term: Int): Unit = {
     val idWeights = topDocsForTerm(term)
-    println(idWeights.map { case (score, id) => (data.docIds(id), score) }.mkString(", "))
+    println(idWeights.map { case (score, id) => (data.docIds(id.toInt), score) }.mkString(", "))
   }
 
   def printTopDocsForTermQuery(terms: Seq[String]): Unit = {
     val queryVec = termsToQueryVector(terms)
     val idWeights = topDocsForTermQuery(queryVec)
-    println(idWeights.map { case (score, id) => (data.docIds(id), score) }.mkString(", "))
+    println(idWeights.map { case (score, id) => (data.docIds(id.toInt), score) }.mkString(", "))
   }
 }

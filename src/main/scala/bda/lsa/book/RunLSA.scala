@@ -4,13 +4,12 @@
  * See LICENSE file for further information.
  */
 
-package bda.lsa
+package bda.lsa.book
 
-import bda.lsa.preprocessing.AssembleDocumentTermMatrix
 import breeze.linalg.{DenseMatrix => BDenseMatrix, SparseVector => BSparseVector}
-import org.apache.spark.mllib.linalg.{Matrices, Matrix, SingularValueDecomposition, Vectors, Vector => MLLibVector}
 import org.apache.spark.ml.linalg.{Vector => MLVector}
 import org.apache.spark.mllib.linalg.distributed.RowMatrix
+import org.apache.spark.mllib.linalg.{Matrices, Matrix, SingularValueDecomposition, Vectors, Vector => MLLibVector}
 import org.apache.spark.serializer.KryoSerializer
 import org.apache.spark.sql.{Dataset, SparkSession}
 

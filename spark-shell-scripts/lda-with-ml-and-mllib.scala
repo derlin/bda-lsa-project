@@ -1,3 +1,4 @@
+import bda.lsa.book.AssembleDocumentTermMatrix
 
 /**
   * date: 14.05.17
@@ -15,7 +16,6 @@ val k = 100
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.sql.Dataset
-import bda.lsa.preprocessing.AssembleDocumentTermMatrix
 
 val assembleMatrix = new AssembleDocumentTermMatrix(spark)
 

@@ -24,9 +24,9 @@ object RunSVD {
       getOrCreate()
 
     val data: Data = getData(spark)
-    val corpus: RDD[(Long, (mllib_Vector, String))] = docTermMatrixToCorpusRDD(spark, data.dtm)
+    val corpus: RDD[(Long, (mllib_Vector, String))] = docTermMatrixToCorpusRDD(spark, data)
 
-    val vecRDD = corpus.map(_._2._1)
+    val vecRDD = corpus.sortByKey().map(_._2._1)
     vecRDD.cache()
 
     val mat = new RowMatrix(vecRDD)

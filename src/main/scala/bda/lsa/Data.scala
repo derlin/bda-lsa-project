@@ -13,19 +13,19 @@ case class Data(
                  spark: SparkSession,
                  dtm: DataFrame,
                  termIds: Array[String],
-                 docIds: Map[Long, String],
+                 docIds:  Array[String],
                  tfIdfs: Array[Double]) {
 
   lazy val termsLookup = termIds.zipWithIndex.toMap
 
-  lazy val docIdsLookup: DataFrame =
-    spark.sqlContext.createDataFrame(docIds.toSeq).
-      toDF("id", "title")
+  lazy val docIdsLookup: Map[String, Long] = docIds.zipWithIndex.map(t => (t._1, t._2.toLong)).toMap
+  lazy val docsDF: DataFrame =
+    spark.sqlContext.createDataFrame(docIdsLookup.toSeq).toDF("title", "id")// TODO
 
   def findDocsByTitle(search: String, numDocs: Int = 15): Array[(Long, String)] = {
     import spark.implicits._
     import org.apache.spark.sql.functions._
-    docIdsLookup.
+    docsDF.
       select("id", "title").
       where(lower($"title").like("%" + search + "%")).
       map { case Row(id: Long, title: String) => (id, title) }.

@@ -13,9 +13,8 @@ import org.apache.spark.sql.{Row, SparkSession}
   */
 class LDAQueryEngine(model: DistributedLDAModel, data: Data) {
 
-  val docIdTitleRDD: RDD[(Long, String)] = data.docIdsLookup.rdd.map {
-    case Row(id: Long, title: String) => (id, title)
-  }
+  val docIdTitleRDD: RDD[(Long, String)] = data.spark.sparkContext.parallelize(
+    data.docIds.zipWithIndex.map(t => (t._2.toLong, t._1)))
 
 
   def describeTopicsWithWords(numWords: Int) = {
@@ -24,8 +23,8 @@ class LDAQueryEngine(model: DistributedLDAModel, data: Data) {
       map { topic => topic._1.map(data.termIds(_)) }
   }
 
-  def topTopicsForDocument(id: Long, numTopics: Int = 10): Array[(Int,Double)] = {
-    model.topTopicsPerDocument(numTopics).filter(_._1 == id).map(r => r._2 zip r._3).first
+  def topTopicsForDocument(id: Long, numTopics: Int = 10): Array[(Int, Double)] = {
+    model.topTopicsPerDocument(numTopics).filter(_._1 == id).map(r => r._2 zip r._3).first.sortBy(-_._2)
   }
 
   def topDocumentsForTopic(tid: Int, numDocs: Int = 10) = {

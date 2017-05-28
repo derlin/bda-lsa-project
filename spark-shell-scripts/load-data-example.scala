@@ -1,3 +1,4 @@
+import bda.lsa.book.AssembleDocumentTermMatrix
 
 /**
   * date: 13.05.17
@@ -41,7 +42,6 @@ val stopwordsFile = "src/main/resources/stopwords.txt"
 
 import org.apache.spark.sql.Dataset
 
-import bda.lsa.preprocessing.AssembleDocumentTermMatrix
 val assembleMatrix = new AssembleDocumentTermMatrix(spark)
 
 import assembleMatrix._

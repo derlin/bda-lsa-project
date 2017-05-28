@@ -4,7 +4,7 @@
  * See LICENSE file for further information.
  */
 
-package bda.lsa.preprocessing
+package bda.lsa.book
 
 import java.util.Properties
 
