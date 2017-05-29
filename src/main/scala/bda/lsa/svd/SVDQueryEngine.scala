@@ -9,9 +9,17 @@ import org.apache.spark.mllib.linalg.distributed.{IndexedRow, IndexedRowMatrix, 
 import scala.collection.Map
 
 /**
-  * date: 28.05.17
+  * This class implements useful methods to query and discover an SVD model.
+  * It is inspired by the book Advanced Spark Programing v2, chapter 6, but has been modified to
+  * work with [[org.apache.spark.mllib.linalg.distributed.IndexedRowMatrix]] instead of
+  * [[org.apache.spark.mllib.linalg.distributed.RowMatrix]]. This way, the document id is embedded in the matrix
+  * instead of relying on a "zipWithUniqueId trick" that works only when we do everything
+  * (preprocessing, modeling, querying) inside the same spark session.
+  * <p>
+  * context: BDA - Master MSE,
+  * date: 18.05.17
   *
-  * @author Lucy Linder <lucy.derlin@gmail.com>
+  * @author Lucy Linder [lucy.derlin@gmail.com]
   */
 class SVDQueryEngine(val model: SingularValueDecomposition[IndexedRowMatrix, Matrix], val data: Data) {
 

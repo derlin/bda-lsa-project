@@ -8,13 +8,28 @@ import org.apache.spark.serializer.KryoSerializer
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 /**
-  * date: 19.05.17
+  * Class for creating a Singular Value Decomposition model using spark mllib.
+  * It is inspired by the book Advanced Spark Programing v2, chapter 6, but has been modified to
+  * work with [[org.apache.spark.mllib.linalg.distributed.IndexedRowMatrix]] instead of
+  * [[org.apache.spark.mllib.linalg.distributed.RowMatrix]]. This way, the document id is embedded in the matrix
+  * instead of relying on a "zipWithUniqueId trick" that works only when we do everything
+  * (preprocessing, modeling, querying) inside the same spark session.
+  * <p>
+  * context: BDA - Master MSE,
+  * date: 18.05.17
   *
-  * @author Lucy Linder <lucy.derlin@gmail.com>
+  * @author Lucy Linder [lucy.derlin@gmail.com]
   */
 object RunSVD {
   val pathSuffix = "/svd"
 
+  /**
+    * Create the SVD model and save it to disk (see [[saveModel]]).
+    *
+    * @param args an array of string:
+    *             
+    *  - k: the number of topics to infer, default to 100
+    */
   def main(args: Array[String]): Unit = {
     // parse arguments
     val k = if (args.length > 0) args(0).toInt else 100
@@ -30,7 +45,7 @@ object RunSVD {
   }
 
   def run(spark: SparkSession, data: Data, k: Int): mllib_SingularValueDecomposition[IndexedRowMatrix, Matrix] = {
-    
+
     val corpus: RDD[(Long, (mllib_Vector, String))] = docTermMatrixToCorpusRDD(spark, data)
     val vecRDD = corpus.map(t => IndexedRow(t._1, t._2._1))
     vecRDD.cache()
@@ -64,7 +79,7 @@ object RunSVD {
   }
 
   /**
-    * Load a model previously saved by [[saveModel()]].
+    * Load a model previously saved by [[saveModel]].
     *
     * @param spark the current spark session
     * @return the SVD model

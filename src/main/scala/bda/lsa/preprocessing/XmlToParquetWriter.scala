@@ -28,7 +28,20 @@ import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 // ```
 //
 
-
+/**
+  * Convert a wikidump in XML to text. The Dataset[(title:String, content:String)] is saved to disk as parquet file
+  * at the location set by [[bda.lsa.wikidumpPath]].
+  * <p>
+  * Commandline arguments:
+  *
+  *   -  numDocs: the maximum number of documents to keep (-1 for all)
+  *
+  * <p>
+  * context: BDA - Master MSE,
+  * date: 18.05.17
+  *
+  * @author Lucy Linder [lucy.derlin@gmail.com]
+  */
 object XmlToParquetWriter extends App {
   // parse arguments:
   // usage: input-path output-path [num partitions]

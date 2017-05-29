@@ -52,3 +52,13 @@ unmanagedJars in Compile += file("lib/spark-corenlp-0.2.0-s_2.11.jar")
 //  // other resolvers here
 //  "Maven Releases" at "https://dl.bintray.com/spark-packages/maven/"
 //)
+
+
+val docScalacOptions = Seq(
+  "-groups",
+  "-implicits"
+)
+
+scalacOptions in (Compile, doc) ++= docScalacOptions
+scalacOptions in (Test, doc) ++= docScalacOptions
+autoAPIMappings := true

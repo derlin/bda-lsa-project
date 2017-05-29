@@ -5,9 +5,20 @@ import bda.lsa._
 import org.apache.spark.{SparkConf, SparkContext}
 
 /**
-  * date: 19.05.17
+  * This class run [[bda.lsa.preprocessing.TextToIDF.preprocess]] and saves the result
+  * as parquet file (see [[bda.lsa.saveData]]).
+  * <p>
+  * Command line arguments:
   *
-  * @author Lucy Linder <lucy.derlin@gmail.com>
+  * - numTerms: the number of words in the dictionary (the terms with the max frequency are kept), default to 2000
+  * - percent: the percentage of articles to keep, useful for sampling, default to -1 (i.e. no sampling)
+  * - numDocs: use it in conjonction with percent to limit the number of documents to keep
+  *
+  * <p>
+  * context: BDA - Master MSE,
+  * date: 18.05.17
+  *
+  * @author Lucy Linder [lucy.derlin@gmail.com]
   */
 object DocTermMatrixWriter extends App {
   val numTerms = if (args.length > 0) args(0).toInt else 2000
@@ -39,7 +50,13 @@ object DocTermMatrixWriter extends App {
     bda.lsa.saveData(Data(spark, docTermMatrix, termIds, docIds, termIdfs))
 
 
-  def filterTitles(spark: SparkSession, docTexts: Dataset[(String, String)]) = {
+  /**
+    * Remove articles with a title containing `List`, `Category` or a number.
+    * @param spark  the spark context
+    * @param docTexts the DataSet[(title: String, content: String)]
+    * @return the filtered dataset
+    */
+  def filterTitles(spark: SparkSession, docTexts: Dataset[(String, String)]): Dataset[(String, String)] =  {
     import org.apache.spark.sql.functions._
     import spark.implicits._
     docTexts.
