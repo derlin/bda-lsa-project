@@ -36,7 +36,7 @@ object TextToIDF {
     * @return see [[bda.lsa.Data]]
     */
   def preprocess(spark: SparkSession, docTexts: Dataset[(String, String)], numTerms: Int)
-  : (DataFrame, Array[String], Array[String], Array[Double]) = {
+  : (DataFrame, Array[String], Array[Double]) = {
     import spark.implicits._
     import org.apache.spark.sql.functions._
     import com.databricks.spark.corenlp.functions._
@@ -76,13 +76,12 @@ object TextToIDF {
     println("applying TF-IDF.")
     val idf = new IDF().setInputCol("termFreqs").setOutputCol("tfidfVec")
     val idfModel = idf.fit(docTermFreqs)
-    val docTermMatrix = idfModel.transform(docTermFreqs).select("title", "tfidfVec")
-
-
-    val docIds = docTermFreqs.rdd.map(_.getString(0)).collect
+    val docTermMatrix = idfModel.transform(docTermFreqs).
+      select("title", "tfidfVec").
+      withColumn("id",monotonically_increasing_id)
 
     println("matrix generated.")
-    (docTermMatrix, vocabModel.vocabulary, docIds, idfModel.idf.toArray)
+    (docTermMatrix, vocabModel.vocabulary, idfModel.idf.toArray)
   }
 
   /**

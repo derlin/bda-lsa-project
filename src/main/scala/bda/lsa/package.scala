@@ -47,11 +47,10 @@ package object lsa {
     */
   def docTermMatrixToCorpusRDD(spark: SparkSession, data: Data):
   RDD[(Long, (mllib_Vector, String))] = {
-    val idDocs = data.docIds.zipWithIndex.toMap
     import spark.implicits._
     data.dtm.
-      select("tfidfVec", "title").
-      map { case Row(v: ml_Vector, t: String) => (idDocs(t).toLong, (mllib_Vectors.fromML(v), t)) }.
+      select("id", "tfidfVec", "title").
+      map { case Row(id: Long, v: ml_Vector, t: String) => (id, (mllib_Vectors.fromML(v), t)) }.
       rdd
   }
 
@@ -68,7 +67,6 @@ package object lsa {
     import data.spark.implicits._
     data.dtm.write.parquet(wikidumpMatrixPath + "/docTermMatrix")
     ctx.parallelize(data.termIds, 1).toDF().write.parquet(wikidumpMatrixPath + "/termIds")
-    ctx.parallelize(data.docIds.toSeq, 1).toDF.write.parquet(wikidumpMatrixPath + "/docIds")
     ctx.parallelize(data.tfIdfs, 1).toDF.write.parquet(wikidumpMatrixPath + "/idfs")
     // TODO: don't save docIds, since we can get them back using
     // docTermMatrix.select("title").rdd.zipWithUniqueId.map(_.swap).collect.toMap
@@ -88,10 +86,9 @@ package object lsa {
     import spark.implicits._
     val docTermMatrix = spark.sqlContext.read.parquet(wikidumpMatrixPath + "/docTermMatrix")
     val termIds = spark.sqlContext.read.parquet(wikidumpMatrixPath + "/termIds").map(_.getAs[String](0)).collect
-    val docIds = spark.sqlContext.read.parquet(wikidumpMatrixPath + "/docIds").map(_.getAs[String](0)).collect
     val idfs = spark.sqlContext.read.parquet(wikidumpMatrixPath + "/idfs").map(_.getAs[Double](0)).collect
 
-    Data(spark, docTermMatrix, termIds, docIds, idfs)
+    Data(spark, docTermMatrix, termIds, idfs)
   }
 
 }

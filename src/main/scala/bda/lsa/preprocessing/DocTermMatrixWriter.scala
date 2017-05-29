@@ -46,8 +46,8 @@ object DocTermMatrixWriter extends App {
   } 
 
     println("preprocess using spark-nlp")
-    val (docTermMatrix, termIds, docIds, termIdfs) = TextToIDF.preprocess(spark, filtered, numTerms)
-    bda.lsa.saveData(Data(spark, docTermMatrix, termIds, docIds, termIdfs))
+    val (docTermMatrix, termIds, termIdfs) = TextToIDF.preprocess(spark, filtered, numTerms)
+    bda.lsa.saveData(Data(spark, docTermMatrix, termIds, termIdfs))
 
 
   /**

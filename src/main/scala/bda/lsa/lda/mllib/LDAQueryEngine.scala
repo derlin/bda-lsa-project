@@ -13,8 +13,10 @@ import org.apache.spark.sql.{Row, SparkSession}
   */
 class LDAQueryEngine(model: DistributedLDAModel, data: Data) {
 
-  val docIdTitleRDD: RDD[(Long, String)] = data.spark.sparkContext.parallelize(
-    data.docIds.zipWithIndex.map(t => (t._2.toLong, t._1)))
+  import data.spark.implicits._
+  val docIdTitleRDD: RDD[(Long, String)] = data.dtm.select("id", "title").map{
+    case Row(id: Long, title: String) => (id, title)
+  }.rdd
 
 
   def describeTopicsWithWords(numWords: Int) = {

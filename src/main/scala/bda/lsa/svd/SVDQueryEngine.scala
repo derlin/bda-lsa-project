@@ -30,7 +30,6 @@ class SVDQueryEngine(val model: SingularValueDecomposition[IndexedRowMatrix, Mat
   val normalizedUS: IndexedRowMatrix = distributedRowsNormalized(US)
 
   val idTerms: Map[String, Int] = data.termIds.zipWithIndex.toMap
-  val idDocs: Map[String, Long] = data.docIds.zipWithIndex.map{ case (t1, t2) => (t1, t2.toLong)}.toMap
 
   /**
     * Finds the product of a dense matrix and a diagonal matrix represented by a vector.
@@ -182,17 +181,17 @@ class SVDQueryEngine(val model: SingularValueDecomposition[IndexedRowMatrix, Mat
 
   def printTopDocsForDoc(doc: Long): Unit = {
     val idWeights = topDocsForDoc(doc)
-    println(idWeights.map { case (score, id) => (data.docIds(id.toInt), score) }.mkString(", "))
+    println(idWeights.map { case (score, id) => (data.docTitle(id), score) }.mkString(", "))
   }
 
   def printTopDocsForTerm(term: Int): Unit = {
     val idWeights = topDocsForTerm(term)
-    println(idWeights.map { case (score, id) => (data.docIds(id.toInt), score) }.mkString(", "))
+    println(idWeights.map { case (score, id) => (data.docTitle(id), score) }.mkString(", "))
   }
 
   def printTopDocsForTermQuery(terms: Seq[String]): Unit = {
     val queryVec = termsToQueryVector(terms)
     val idWeights = topDocsForTermQuery(queryVec)
-    println(idWeights.map { case (score, id) => (data.docIds(id.toInt), score) }.mkString(", "))
+    println(idWeights.map { case (score, id) => (data.docTitle(id), score) }.mkString(", "))
   }
 }
