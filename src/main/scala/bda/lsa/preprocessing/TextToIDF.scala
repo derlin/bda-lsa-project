@@ -76,12 +76,13 @@ object TextToIDF {
     println("applying TF-IDF.")
     val idf = new IDF().setInputCol("termFreqs").setOutputCol("tfidfVec")
     val idfModel = idf.fit(docTermFreqs)
-    val docTermMatrix = idfModel.transform(docTermFreqs).
-      select("title", "tfidfVec").
-      withColumn("id",monotonically_increasing_id)
+    val docTermMatrix = idfModel.transform(docTermFreqs)
+      //withColumn("id",monotonically_increasing_id).
+      //select("id", "title", "tfidfVec")
 
+    val dtm = bda.lsa.addNiceRowId(spark, docTermMatrix) // add nice ids
     println("matrix generated.")
-    (docTermMatrix, vocabModel.vocabulary, idfModel.idf.toArray)
+    (dtm, vocabModel.vocabulary, idfModel.idf.toArray)
   }
 
   /**

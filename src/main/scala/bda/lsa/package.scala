@@ -91,4 +91,25 @@ package object lsa {
     Data(spark, docTermMatrix, termIds, idfs)
   }
 
+  /**
+    * Add "nice" row ids to a dataframe, using `zipWithUniqueId`. Compared to:
+    * {{
+    * import org.apache.spark.sql.functions._
+    * df.withColumn("id",monotonically_increasing_id)
+    * }}
+    * which creates ids of more than 10 digits (8589934597),  this one generates smaller ids.
+    *
+    * @param spark
+    * @param df
+    * @return
+    */
+  def addNiceRowId(spark: SparkSession, df: DataFrame): DataFrame = {
+    import org.apache.spark.sql.types.{StructType, StructField, LongType}
+    val schema = df.schema
+    val rowsWithId = df.rdd.zipWithUniqueId.map {
+      case (r: Row, id: Long) => Row.fromSeq(id +: r.toSeq)
+    }
+    spark.sqlContext.createDataFrame(rowsWithId, StructType(StructField("id", LongType, nullable = false) +: df.schema.fields))
+  }
+
 }
