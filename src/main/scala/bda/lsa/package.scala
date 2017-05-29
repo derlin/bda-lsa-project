@@ -1,10 +1,9 @@
 package bda
 
 
-import org.apache.spark.mllib.linalg.{Vector => mllib_Vector}
-import org.apache.spark.mllib.linalg.Vectors
+import org.apache.spark.mllib.linalg.{Vector => mllib_Vector, Vectors => mllib_Vectors}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
-import org.apache.spark.ml.linalg.{Vector => MLVector}
+import org.apache.spark.ml.linalg.{Vector => ml_Vector}
 import org.apache.spark.rdd.RDD
 
 /**
@@ -34,7 +33,7 @@ package object lsa {
 
   def docTermMatrixToRDD(docTermMatrix: DataFrame, featuresCol: String = "tfidfVec"): RDD[mllib_Vector] = {
     docTermMatrix.select(featuresCol).rdd.map { row =>
-      Vectors.fromML(row.getAs[MLVector](featuresCol))
+      mllib_Vectors.fromML(row.getAs[ml_Vector](featuresCol))
     }
   }
 
@@ -48,10 +47,11 @@ package object lsa {
     */
   def docTermMatrixToCorpusRDD(spark: SparkSession, data: Data):
   RDD[(Long, (mllib_Vector, String))] = {
+    val idDocs = data.docIds.zipWithIndex.toMap
     import spark.implicits._
     data.dtm.
       select("tfidfVec", "title").
-      map { case Row(v: MLVector, t: String) => (data.docIdsLookup(t), (Vectors.fromML(v), t)) }.
+      map { case Row(v: ml_Vector, t: String) => (idDocs(t).toLong, (mllib_Vectors.fromML(v), t)) }.
       rdd
   }
 
@@ -68,8 +68,8 @@ package object lsa {
     import data.spark.implicits._
     data.dtm.write.parquet(wikidumpMatrixPath + "/docTermMatrix")
     ctx.parallelize(data.termIds, 1).toDF().write.parquet(wikidumpMatrixPath + "/termIds")
-    ctx.parallelize(data.docIds.toSeq).toDF.write.parquet(wikidumpMatrixPath + "/docIds")
-    ctx.parallelize(data.tfIdfs).toDF.write.parquet(wikidumpMatrixPath + "/idfs")
+    ctx.parallelize(data.docIds.toSeq, 1).toDF.write.parquet(wikidumpMatrixPath + "/docIds")
+    ctx.parallelize(data.tfIdfs, 1).toDF.write.parquet(wikidumpMatrixPath + "/idfs")
     // TODO: don't save docIds, since we can get them back using
     // docTermMatrix.select("title").rdd.zipWithUniqueId.map(_.swap).collect.toMap
   }

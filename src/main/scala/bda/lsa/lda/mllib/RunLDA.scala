@@ -18,34 +18,47 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
   */
 object RunLDA {
   val pathSuffix = "/mllib-lda"
+  
+  var k = 100
+  var maxIterations = 20
+  var alpha = (50.0 / k) + 1
+  var beta = -1
+  var optimizerAlgorithm = "em"
 
   def main(args: Array[String]): Unit = {
     // parse arguments
-    val k = if (args.length > 0) args(0).toInt else 100
-    val maxIterations = if (args.length > 1) args(1).toInt else 20
-    val alpha = if (args.length > 2) args(2).toInt else (50.0 / k) + 1
+    if (args.length > 0) k = args(0).toInt
+    if (args.length > 1) maxIterations = args(1).toInt
+    if (args.length > 2) alpha = args(2).toInt
     // Typical value is (50 / nbTopics)
-    val beta = if (args.length > 3) args(3).toInt else -1
+    if (args.length > 3) beta = args(3).toInt
     // Typical value is either 0.1 or (200 / vocabularySize)
-    val optimizerAlgorithm = "em"
-
     // We tried to use the 'online' algorithm, but the problem is that he's only able to run locally. Which means huge
     // performance cuts when running it, so we decided to not use it at all and disable that option.
     /*
-    val optimizerAlgorithm = if (args.length > 4) args(4).toLowerCase else "em" // Either "em" or "online"
+     if (args.length > 4) optimizerAlgorithm = args(4).toLowerCase // either "em" or "online"
      */
-
-    val optimizer = optimizerAlgorithm.toLowerCase match {
-      case "em" => new mllib_EMLDAOptimizer
-      case "online" => new mllib_OnlineLDAOptimizer()
-      case _ => throw new IllegalArgumentException(s"Only algorithms 'em', 'online' are supported, not ${optimizerAlgorithm}.")
-    }
+    val optimizerAlgorithm = "em"
 
     val spark = SparkSession.builder().
       config("spark.serializer", classOf[KryoSerializer].getName).
       getOrCreate()
 
     val data: Data = getData(spark)
+    val model: mllib_DistributedLDAModel = run(spark, data)
+
+    // to load it back, use val model = DistributedLDAModel.load(sc, "XXX/mllib-lda-model")
+    saveModel(spark, model)
+  }
+
+  def run(spark: SparkSession, data: Data): mllib_DistributedLDAModel = {
+
+    val optimizer = optimizerAlgorithm.toLowerCase match {
+      case "em" => new mllib_EMLDAOptimizer
+      case "online" => new mllib_OnlineLDAOptimizer()
+      case _ => throw new IllegalArgumentException(s"Only algorithms 'em', 'online' are supported, not ${optimizerAlgorithm}.")
+    }
+    
     val corpus: RDD[(Long, (mllib_Vector, String))] = docTermMatrixToCorpusRDD(spark, data)
 
     corpus.cache()
@@ -60,9 +73,7 @@ object RunLDA {
         run(corpus.mapValues(_._1)).
         asInstanceOf[mllib_DistributedLDAModel]
 
-    // to load it back, use val model = DistributedLDAModel.load(sc, "XXX/mllib-lda-model")
-    saveModel(spark, model)
-
+    model
   }
 
   // -----------------

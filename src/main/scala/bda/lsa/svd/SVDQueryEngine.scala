@@ -3,8 +3,8 @@ package bda.lsa.svd
 
 import bda.lsa.Data
 import breeze.linalg.{DenseMatrix => BDenseMatrix, SparseVector => BSparseVector}
-import org.apache.spark.mllib.linalg.{Matrices, Matrix, SingularValueDecomposition, Vectors, Vector => MLLibVector}
-import org.apache.spark.mllib.linalg.distributed.RowMatrix
+import org.apache.spark.mllib.linalg.{Matrices, Matrix, SingularValueDecomposition, Vectors, Vector => mllib_Vector}
+import org.apache.spark.mllib.linalg.distributed.{IndexedRow, IndexedRowMatrix, RowMatrix}
 
 import scala.collection.Map
 
@@ -13,13 +13,13 @@ import scala.collection.Map
   *
   * @author Lucy Linder <lucy.derlin@gmail.com>
   */
-class SVDQueryEngine(val model: SingularValueDecomposition[RowMatrix, Matrix], val data: Data) {
+class SVDQueryEngine(val model: SingularValueDecomposition[IndexedRowMatrix, Matrix], val data: Data) {
 
 
   val VS: BDenseMatrix[Double] = multiplyByDiagonalMatrix(model.V, model.s)
   val normalizedVS: BDenseMatrix[Double] = rowsNormalized(VS)
-  val US: RowMatrix = multiplyByDiagonalRowMatrix(model.U, model.s)
-  val normalizedUS: RowMatrix = distributedRowsNormalized(US)
+  val US: IndexedRowMatrix = multiplyByDiagonalRowMatrix(model.U, model.s)
+  val normalizedUS: IndexedRowMatrix = distributedRowsNormalized(US)
 
   val idTerms: Map[String, Int] = data.termIds.zipWithIndex.toMap
   val idDocs: Map[String, Long] = data.docIds.zipWithIndex.map{ case (t1, t2) => (t1, t2.toLong)}.toMap
@@ -28,7 +28,7 @@ class SVDQueryEngine(val model: SingularValueDecomposition[RowMatrix, Matrix], v
     * Finds the product of a dense matrix and a diagonal matrix represented by a vector.
     * Breeze doesn't support efficient diagonal representations, so multiply manually.
     */
-  def multiplyByDiagonalMatrix(mat: Matrix, diag: MLLibVector): BDenseMatrix[Double] = {
+  def multiplyByDiagonalMatrix(mat: Matrix, diag: mllib_Vector): BDenseMatrix[Double] = {
     val sArr = diag.toArray
     new BDenseMatrix[Double](mat.numRows, mat.numCols, mat.toArray)
       .mapPairs { case ((r, c), v) => v * sArr(c) }
@@ -37,18 +37,18 @@ class SVDQueryEngine(val model: SingularValueDecomposition[RowMatrix, Matrix], v
   /**
     * Finds the product of a distributed matrix and a diagonal matrix represented by a vector.
     */
-  def multiplyByDiagonalRowMatrix(mat: RowMatrix, diag: MLLibVector): RowMatrix = {
+  def multiplyByDiagonalRowMatrix(mat: IndexedRowMatrix, diag: mllib_Vector): IndexedRowMatrix = {
     val sArr = diag.toArray
-    new RowMatrix(mat.rows.map { vec =>
-      val vecArr = vec.toArray
-      val newArr = (0 until vec.size).toArray.map(i => vecArr(i) * sArr(i))
-      Vectors.dense(newArr)
+    new IndexedRowMatrix(mat.rows.map { r =>
+      val vecArr = r.vector.toArray
+      val newArr = (0 until r.vector.size).toArray.map(i => vecArr(i) * sArr(i))
+      IndexedRow(r.index, Vectors.dense(newArr))
     })
   }
 
   def describeTopicsWithWords(numTerms: Int = 10) = {
     model.V.transpose.rowIter.map {
-      case v: MLLibVector => v.toArray.
+      case v: mllib_Vector => v.toArray.
         zipWithIndex.
         sortBy(-_._1).
         take(numTerms).
@@ -63,8 +63,7 @@ class SVDQueryEngine(val model: SingularValueDecomposition[RowMatrix, Matrix], v
   }
 
   def topDocumentsForTopic(tid: Int, numDocs: Int = 10) = {
-    val docWeights = model.U.rows.map(_.toArray(tid)).zipWithIndex
-    docWeights.top(numDocs)
+    model.U.rows.map(t => (t.vector.toArray(tid), t.index)).top(numDocs)
   }
 
 
@@ -83,11 +82,11 @@ class SVDQueryEngine(val model: SingularValueDecomposition[RowMatrix, Matrix], v
   /**
     * Returns a distributed matrix where each row is divided by its length.
     */
-  def distributedRowsNormalized(mat: RowMatrix): RowMatrix = {
-    new RowMatrix(mat.rows.map { vec =>
-      val array = vec.toArray
+  def distributedRowsNormalized(mat: IndexedRowMatrix): IndexedRowMatrix = {
+    new IndexedRowMatrix(mat.rows.map { r =>
+      val array = r.vector.toArray
       val length = math.sqrt(array.map(x => x * x).sum)
-      Vectors.dense(array.map(_ / length))
+      IndexedRow(r.index, Vectors.dense(array.map(_ / length)))
     })
   }
 
@@ -103,7 +102,7 @@ class SVDQueryEngine(val model: SingularValueDecomposition[RowMatrix, Matrix], v
     val docScores = US.multiply(rowVec)
 
     // Find the docs with the highest scores
-    val allDocWeights = docScores.rows.map(_.toArray(0)).zipWithIndex
+    val allDocWeights = docScores.rows.map(t => (t.vector.toArray(0), t.index))
     allDocWeights.top(10)
   }
 
@@ -128,14 +127,14 @@ class SVDQueryEngine(val model: SingularValueDecomposition[RowMatrix, Matrix], v
     */
   def topDocsForDoc(docId: Long): Seq[(Double, Long)] = {
     // Look up the row in US corresponding to the given doc ID.
-    val docRowArr = normalizedUS.rows.zipWithIndex.map(_.swap).lookup(docId).head.toArray
+    val docRowArr = normalizedUS.rows.map(t => (t.index, t.vector)).lookup(docId).head.toArray
     val docRowVec = Matrices.dense(docRowArr.length, 1, docRowArr)
 
     // Compute scores against every doc
     val docScores = normalizedUS.multiply(docRowVec)
 
     // Find the docs with the highest scores
-    val allDocWeights = docScores.rows.map(_.toArray(0)).zipWithIndex
+    val allDocWeights = docScores.rows.map(t => (t.vector.toArray(0), t.index))
 
     // Docs can end up with NaN score if their row in U is all zeros.  Filter these out.
     allDocWeights.filter(!_._1.isNaN).top(10)
@@ -164,7 +163,7 @@ class SVDQueryEngine(val model: SingularValueDecomposition[RowMatrix, Matrix], v
     val docScores = US.multiply(termRowVec)
 
     // Find the docs with the highest scores
-    val allDocWeights = docScores.rows.map(_.toArray(0)).zipWithIndex
+    val allDocWeights = docScores.rows.map(t => (t.vector.toArray(0), t.index))
     allDocWeights.top(10)
   }
 
