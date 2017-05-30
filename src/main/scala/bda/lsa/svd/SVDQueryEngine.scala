@@ -59,7 +59,8 @@ class SVDQueryEngine(val model: SingularValueDecomposition[IndexedRowMatrix, Mat
         zipWithIndex.
         sortBy(-_._1).
         take(numTerms).
-        map(t => data.termIds(t._2))
+        map(t => data.termIds(t._2)).
+        mkString(", ")
     }.toArray
   }
 

@@ -28,10 +28,11 @@ object RunLDA {
   /** max iterations during the model construction */
   var maxIterations = 100
   /** the prior on the per-document topic distributions
-    * Typical value is (50 / nbTopics), or +1 if EM used  */
+    * Typical value is (50 / nbTopics), with +1 if EM used  */
   var alpha = (50.0 / k) + 1
   /** the prior on the per-topic word distribution
-    * if set to -1, it will automatically be set to `200.0 / data.termIds.length` */
+    * if set to -1, it will automatically be set by the library.
+    * a good value is `200.0 / data.termIds.length` */
   var beta = -1
   /** the optimizer to use, "em" or "online"
     * Here, we force EM because online only runs locally */
@@ -62,6 +63,7 @@ object RunLDA {
     val optimizerAlgorithm = "em"
 
     val spark = SparkSession.builder().
+      appName("RunLDA K=" + k).
       config("spark.serializer", classOf[KryoSerializer].getName).
       getOrCreate()
 
@@ -100,7 +102,7 @@ object RunLDA {
       new mllib_LDA().
         setOptimizer(optimizer).
         setAlpha(alpha).
-        setBeta(if (beta > 0) beta else (200.0 / data.termIds.length) + 1).
+        setBeta(beta).
         setK(k).
         setMaxIterations(maxIterations).
         run(corpus.mapValues(_._1)).

@@ -48,7 +48,9 @@ object XmlToParquetWriter extends App {
   // the partitions argument will determine the number of output files
   val numDocs = if (args.length > 0) args(0).toInt else -1
 
-  val spark = SparkSession.builder().getOrCreate()
+  val spark = SparkSession.builder().
+    appName("XmlToParquetWriter").
+    getOrCreate()
 
   val assembleMatrix = new AssembleDocumentTermMatrix(spark)
 

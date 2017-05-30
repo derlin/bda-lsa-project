@@ -35,6 +35,7 @@ object RunSVD {
     val k = if (args.length > 0) args(0).toInt else 100
 
     val spark = SparkSession.builder().
+      appName("RunSVD K=" + k).
       config("spark.serializer", classOf[KryoSerializer].getName).
       getOrCreate()
 

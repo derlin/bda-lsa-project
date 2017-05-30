@@ -22,7 +22,15 @@ class LDAQueryEngine(model: DistributedLDAModel, data: Data) {
   def describeTopicsWithWords(numWords: Int) = {
     model.
       describeTopics(numWords).
-      map { topic => topic._1.map(data.termIds(_)) }
+      map { topic => topic._1.map(data.termIds(_)) }.
+      map(_.mkString(", "))
+  }
+
+  def describeTopicsWithWordsAndStat(numWords: Int) = {
+    model.
+      describeTopics(numWords).
+      map { topic => topic._1.map(data.termIds(_)).zip(topic._2) }.
+      map(_.mkString(", "))
   }
 
   def topTopicsForDocument(id: Long, numTopics: Int = 10): Array[(Int, Double)] = {
