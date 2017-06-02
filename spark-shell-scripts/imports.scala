@@ -4,6 +4,7 @@ import org.apache.spark.mllib.clustering.{DistributedLDAModel => mllib_Distribut
 import org.apache.spark.ml.clustering.{DistributedLDAModel => ml_DistributedLDAModel, LDA => ml_LDA}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.mllib.linalg.distributed.{IndexedRow, IndexedRowMatrix, RowMatrix}
 
 import bda.lsa._
 import bda.lsa.lda
