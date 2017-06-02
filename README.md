@@ -73,37 +73,49 @@ __Example of pipeline__
    
 # Models available
 
-TODO
+__SVD__ 
+
+The class `bda.lsa.svd.RunSVD` makes it easy to compute an SVD model.
+
+The results are saved in `{base.path}/svd`. More information about SVD can be found in the [svd package README](/derlin/bda-lsa-project/blob/master/src/main/scala/bda/lsa/svd/Readme.md).
+
+After creating the model (see steps above), you can use the `bda.lsa.svd.SVDQueryEngine` to discover the results. From a spark-shell:
+
+```
+spark-shell --jars bda-project-lsa-assembly-1.0.jar
+> val data = bda.lsa.getData(spark)
+> val model = bda.lsa.svd.RunSVD.loadModel(spark)
+> val q = new bda.lsa.svd.SVDQueryEngine(model, data)
+```
+
+See the [wiki](/derlin/bda-lsa-project/wiki) for our results and conclusion.
+ 
+ __LDA__
+ 
+ LDA models are available in two flavors: with _spark mllib_ and _spark ml_.
+ 
+ We focused on the mllib implementation, mostly because the `org.apache.spark.mllib.clustering.DistributedLDAModel` offer more utility methods than it's ml counterpart. Our ml implementation will creates the model, but does not offer a useful query engine.
+ 
+To run the model:
+
+    spark-submit --class bda.lsa.lda.mllib.RunLDA \
+          target/scala-2.11/bda-project-lsa-assembly-1.0.jar  \
+          <k: default 100>  <maxIters: default 100> <alpha: default -1>  <beta: default -1>
+          
+The model is then saved to `{base.path}/mllib-lda`.
+
+After creating the model (see steps above), you can use the `bda.lsa.lda.mllib.LDAQueryEngine` to discover the results. From a spark-shell:
+ 
+ ```
+ spark-shell --jars bda-project-lsa-assembly-1.0.jar
+ > val data = bda.lsa.getData(spark)
+ > val model = bda.lsa.lda.mllib.RunLDA.loadModel(spark)
+ > val q = new bda.lsa.lda.mllib.LDAQueryEngine(model, data)
+ ```
+ 
+ See the [wiki](/derlin/bda-lsa-project/wiki) for our results and conclusion.
 
 
-# Running on the daplab
-
-TODO
-
-export environment variables:
-
-    export SPARK_MAJOR_VERSION=2
-    export HADOOP_CONF_DIR=/etc/hadoop/conf
-    export LD_LIBRARY_PATH=/usr/hdp/current/hadoop-client/lib/native:$LD_LIBRARY_PATH
-    
-launch the shell on yarn:
-
-    spark-shell --master yarn --deploy-mode client  --jars target/scala-2.11/bda-project-lsa-assembly-1.0.jar    
-    spark-shell --master yarn --deploy-mode client  --jars target/scala-2.11/bda-project-lsa-assembly-1.0.jar  --driver-memory 2G --executor-memory 15G --executor-cores 8 
-    
-    spark-shell --master yarn-client --num-executors 10 --driver-memory 20G --executor-memory 10g --conf spark.rpc.message.maxSize=100 spark.shuffle.manager=SORT spark.yarn.executor.memoryOverhead=4096 --jars target/scala-2.11/bda-project-lsa-assembly-1.0.jar
-    
-    spark-shell --master yarn-client --num-executors 10 --driver-memory 20G --executor-memory 10g --conf spark.rpc.message.maxSize=100 spark.shuffle.manager=SORT spark.yarn.executor.memoryOverhead=4096 --jars target/scala-2.11/bda-project-lsa-assembly-1.0.jar
-    
-    
-Local
-
-    spark-submit --class bda.lsa.PrepareData --master "local[*]"  target/scala-2.11/bda-project-lsa-assembly-1.0.jar wikidump.xml wikidump.txt
-    
-    
-    spark-submit --class bda.lsa.preprocessing.DocTermMatrixWriter  --master yarn-client --num-executors 3 --driver-memory 20G --executor-memory 10g target/scala-2.11/bda-project-lsa-assembly-1.0.jar 5000
-    
-    
 sbt out of memory error: 
 
        export JAVA_OPTS="-Xms256m -Xmx4g"

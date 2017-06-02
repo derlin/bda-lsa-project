@@ -52,11 +52,11 @@ class LDAQueryEngine(model: DistributedLDAModel, data: Data) {
       zipWithIndex.
       sortBy(-_._1)
   }
-
-  def topTopicsForWord_(wid: Int) = {
-    // see https://gist.github.com/alex9311/774089d936eee505d7832c6df2eb597d
-    val term = mllib_Vectors.sparse(data.termIds.length, Array(wid -> 1.0).toSeq)
-    val topicDistrib = model.toLocal.topicDistribution(term).toArray.zipWithIndex.sortBy(-_._1)
-    topicDistrib
-  }
+//
+//  def topTopicsForWord_(wid: Int) = {
+//    // see https://gist.github.com/alex9311/774089d936eee505d7832c6df2eb597d
+//    val term = mllib_Vectors.sparse(data.termIds.length, Array(wid -> 1.0).toSeq)
+//    val topicDistrib = model.toLocal.topicDistribution(term).toArray.zipWithIndex.sortBy(-_._1)
+//    topicDistrib
+//  }
 }

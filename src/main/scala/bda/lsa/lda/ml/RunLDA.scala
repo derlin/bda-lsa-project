@@ -4,21 +4,38 @@ import bda.lsa._
 
 import org.apache.spark.ml.clustering.{DistributedLDAModel => ml_DistributedLDAModel, LDA => ml_LDA}
 import org.apache.spark.serializer.KryoSerializer
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.SparkSession
 
 /**
+  * Class for creating a Latent Dirichlet allocation model using spark ml.
+  * <p>
+  * context: BDA - Master MSE,
   * date: 18.05.17
-  *
-  * @author Lucy Linder <lucy.derlin@gmail.com>
+  * @author Lucy Linder [lucy.derlin@gmail.com]
   */
 object RunLDA {
   val pathSuffix = "/ml-lda"
 
+  /** the number of topics to infer */
+  var k = 100
+  /** max iterations during the model construction */
+  var maxIterations = 100
+
+  /**
+    * Create the LDA model and save it to disk (see [[saveModel]]).
+    *
+    * @param args an array of String, in the order:
+    *
+    *  - k: the number of topics to infer, default to 100
+    *  - maxIterations: default to 100
+    */
   def main(args: Array[String]): Unit = {
     // parse arguments
-    val k = if (args.length > 0) args(0).toInt else 100
+    if (args.length > 0) k = args(0).toInt
+    if (args.length > 1) maxIterations = args(1).toInt
 
     val spark = SparkSession.builder().
+      appName("ml.RunLDA K=" + k).
       config("spark.serializer", classOf[KryoSerializer].getName).
       getOrCreate()
 
@@ -27,6 +44,8 @@ object RunLDA {
     val lda_model: ml_LDA =
       new ml_LDA().
         setK(k).
+        setOptimizeDocConcentration(true).
+        setOptimizer("em").
         setMaxIter(10).
         setFeaturesCol("tfidfVec")
 
