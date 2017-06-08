@@ -34,6 +34,8 @@ object RunLDA {
     if (args.length > 0) k = args(0).toInt
     if (args.length > 1) maxIterations = args(1).toInt
 
+    println(s"Running with k=${k} and maxIters=${maxIterations}")
+
     val spark = SparkSession.builder().
       appName("ml.RunLDA K=" + k).
       config("spark.serializer", classOf[KryoSerializer].getName).
@@ -46,7 +48,7 @@ object RunLDA {
         setK(k).
         setOptimizeDocConcentration(true).
         setOptimizer("em").
-        setMaxIter(10).
+        setMaxIter(maxIterations).
         setFeaturesCol("tfidfVec")
 
     val model: ml_DistributedLDAModel = lda_model.fit(data.dtm).asInstanceOf[ml_DistributedLDAModel]

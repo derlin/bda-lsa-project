@@ -43,9 +43,19 @@ class LDAQueryEngine(model: DistributedLDAModel, data: Data) {
       collect.
       map(_.map(t => (data.termIds(t._1), t._2)).mkString(", "))
   }
+
+
+  def topTopicsForTerm(wid: Int) = {
+    model.topicsMatrix.rowIter.
+      drop(wid).next.toArray.
+      zipWithIndex.
+      sortBy(-_._1)
+  }
+
+// TODO other queries should be reimplemented to work with DataFrames
 //
 //  def topTopicsForDocument(id: Long, numTopics: Int = 10): Array[(Int, Double)] = {
-//    model.topTopicsPerDocument(numTopics).filter(_._1 == id).map(r => r._2 zip r._3).first.sortBy(-_._2)
+//    model.topicsMatrix(numTopics).filter(_._1 == id).map(r => r._2 zip r._3).first.sortBy(-_._2)
 //  }
 //
 //  def topDocumentsForTopic(tid: Int, numDocs: Int = 10) = {
@@ -57,12 +67,6 @@ class LDAQueryEngine(model: DistributedLDAModel, data: Data) {
 //      collect()
 //  }
 
-  def topTopicsForTerm(wid: Int) = {
-    model.topicsMatrix.rowIter.
-      drop(wid).next.toArray.
-      zipWithIndex.
-      sortBy(-_._1)
-  }
 
   //
   //  def topTopicsForWord_(wid: Int) = {
