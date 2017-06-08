@@ -53,7 +53,7 @@ class LDAQueryEngine(model: DistributedLDAModel, data: Data) {
   }
 
   /**
-    * Same as [[describeTopicsWithWords()]], but also print the weight of each word for the topic
+    * Same as [[describeTopicsWithWords]], but also print the weight of each word for the topic
     *
     * @param numWords the number of top words
     * @return the array of top words as string
@@ -71,7 +71,7 @@ class LDAQueryEngine(model: DistributedLDAModel, data: Data) {
 
   /**
     * Get the top topics for a given document.
-    * @param id the document id (see [[data.docIds]])
+    * @param id the document id (see [[Data.docIds]])
     * @param numTopics  the number of topics to return
     * @return  an array of `(topicId, weight)`
     */
@@ -101,7 +101,7 @@ class LDAQueryEngine(model: DistributedLDAModel, data: Data) {
 
   /**
     * Return the best topics for a given term
-    * @param wid the term id (see [[data.termIds]])
+    * @param wid the term id (see [[Data.termIds]])
     * @return an array of tuples `(topicId, weight)`
     */
   def topTopicsForTerm(wid: Int) : Array[(Int, Double)] = {

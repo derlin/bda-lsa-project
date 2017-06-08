@@ -21,5 +21,6 @@ spark-warehouse
 metastore_db
 derby.log
 
-## docco
+## docco / github.io
 docs
+doc
