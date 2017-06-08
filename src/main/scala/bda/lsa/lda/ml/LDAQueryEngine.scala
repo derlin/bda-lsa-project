@@ -13,6 +13,7 @@ import org.apache.spark.sql.functions._
   * <p>
   * context: BDA - Master MSE,
   * date: 19.05.17
+  *
   * @author Lucy Linder [lucy.derlin@gmail.com]
   */
 class LDAQueryEngine(model: DistributedLDAModel, data: Data) {
@@ -22,6 +23,8 @@ class LDAQueryEngine(model: DistributedLDAModel, data: Data) {
   val docIdTitleRDD: RDD[(Long, String)] = data.dtm.select("id", "title").map {
     case Row(id: Long, title: String) => (id, title)
   }.rdd
+
+  val topicDistUDF = udf((v: ml_Vector, i: Int) => v(i))
 
   /**
     * transformed is a dataframe with columns:
@@ -34,6 +37,7 @@ class LDAQueryEngine(model: DistributedLDAModel, data: Data) {
     *  - `topicDistribution`: LDA --> the weight/importance of this document for each topic.
     */
   val transformed = model.transform(data.dtm) // apply the model to the data
+  transformed.cache()
 
   //  val termIdsRDD: RDD[(Int, String)] = data.spark.sparkContext.parallelize(data.termIds.zipWithIndex.map(_.swap))
 
@@ -58,7 +62,7 @@ class LDAQueryEngine(model: DistributedLDAModel, data: Data) {
     * @param numWords the number of top words
     * @return the array of top words as string
     */
-  def describeTopicsWithWordsAndStat(numWords: Int) : Array[String] = {
+  def describeTopicsWithWordsAndStat(numWords: Int): Array[String] = {
     model.
       describeTopics(numWords).
       select("termIndices", "termWeights").
@@ -71,40 +75,45 @@ class LDAQueryEngine(model: DistributedLDAModel, data: Data) {
 
   /**
     * Get the top topics for a given document.
-    * @param id the document id (see [[Data.docIds]])
-    * @param numTopics  the number of topics to return
-    * @return  an array of `(topicId, weight)`
+    *
+    * @param id        the document id (see [[Data.docIds]])
+    * @param numTopics the number of topics to return
+    * @return an array of `(topicId, weight)`
     */
   def topTopicsForDocument(id: Long, numTopics: Int = 10): Array[(Int, Double)] = {
     val topicDist = transformed.
       select("topicDistribution").
       where($"id" === id).
+      take(1).
       map({ case Row(vec: ml_Vector) => vec.toArray })
-      .take(1)
+    
     if (topicDist.length == 0) null
-    else topicDist.head.zipWithIndex.sortBy(-_._1).map(_.swap)
+    else topicDist.head.zipWithIndex.sortBy(-_._1).map(_.swap).take(numTopics)
   }
 
   /**
     * Get the top documents for a given topic.
-    * @param tid the topic id
-    * @param numDocs         the number of documents to return
-    * @return   an array of `(id, title, weight)`
+    *
+    * @param tid     the topic id
+    * @param numDocs the number of documents to return
+    * @return an array of `(id, title, weight)`
     */
-  def topDocumentsForTopic(tid: Int, numDocs: Int = 10) : Array[(Long, String, Double)] = {
+  def topDocumentsForTopic(tid: Int, numDocs: Int = 10): Array[(Long, String, Double)] = {
     transformed.
       select("id", "title", "topicDistribution").
-      map { case Row(id: Long, t: String, vec: ml_Vector) => (id ,t, vec.toArray(tid)) }.
-      sort(desc("_3")).take(10)
+      orderBy(topicDistUDF($"topicDistribution", lit(tid))).
+      take(numDocs).
+      map { case Row(id: Long, title: String, v: ml_Vector) => (id, title, v(tid)) }
   }
 
 
   /**
     * Return the best topics for a given term
+    *
     * @param wid the term id (see [[Data.termIds]])
     * @return an array of tuples `(topicId, weight)`
     */
-  def topTopicsForTerm(wid: Int) : Array[(Int, Double)] = {
+  def topTopicsForTerm(wid: Int): Array[(Int, Double)] = {
     model.topicsMatrix.rowIter.
       drop(wid).next.toArray.
       zipWithIndex.
