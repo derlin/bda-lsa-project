@@ -101,7 +101,7 @@ class LDAQueryEngine(model: DistributedLDAModel, data: Data) {
   def topDocumentsForTopic(tid: Int, numDocs: Int = 10): Array[(Long, String, Double)] = {
     transformed.
       select("id", "title", "topicDistribution").
-      orderBy(topicDistUDF($"topicDistribution", lit(tid))).
+      orderBy(topicDistUDF($"topicDistribution", lit(tid)).desc).
       take(numDocs).
       map { case Row(id: Long, title: String, v: ml_Vector) => (id, title, v(tid)) }
   }
