@@ -53,7 +53,8 @@ object RunLDA {
 
     val model: ml_DistributedLDAModel = lda_model.fit(data.dtm).asInstanceOf[ml_DistributedLDAModel]
 
-    // to load it back, use val model = DistributedLDAModel.load(sc, "XXX/mllib-lda-model")
+    // to load it back, use val model = DistributedLDAModel.load(sc, "XXX/ml-lda-model")
+    // don't forget to use model.transform(data) !
     saveModel(spark, model)
   }
 

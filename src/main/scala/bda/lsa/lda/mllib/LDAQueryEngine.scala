@@ -7,9 +7,11 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{Row, SparkSession}
 
 /**
-  * date: 19.05.17
-  *
-  * @author Lucy Linder <lucy.derlin@gmail.com>
+  * Class for interacting with an MLLib LDA model. Very useful in a spark shell. See the wiki on github for examples on how to use.
+  * <p>
+  * context: BDA - Master MSE,
+  * date: 18.05.17
+  * @author Lucy Linder [lucy.derlin@gmail.com]
   */
 class LDAQueryEngine(model: DistributedLDAModel, data: Data) {
 
@@ -19,24 +21,48 @@ class LDAQueryEngine(model: DistributedLDAModel, data: Data) {
   }.rdd
 
 
-  def describeTopicsWithWords(numWords: Int) = {
+  /**
+    * The top words for each topic, as a string separated by comma
+    *
+    * @param numWords the number of top words
+    * @return the array of top words as string
+    */
+  def describeTopicsWithWords(numWords: Int): Array[String] = {
     model.
       describeTopics(numWords).
       map { topic => topic._1.map(data.termIds(_)) }.
       map(_.mkString(", "))
   }
 
-  def describeTopicsWithWordsAndStat(numWords: Int) = {
+  /**
+    * Same as [[describeTopicsWithWords()]], but also print the weight of each word for the topic
+    *
+    * @param numWords the number of top words
+    * @return the array of top words as string
+    */
+  def describeTopicsWithWordsAndStat(numWords: Int) : Array[String] = {
     model.
       describeTopics(numWords).
       map { topic => topic._1.map(data.termIds(_)).zip(topic._2) }.
       map(_.mkString(", "))
   }
 
+  /**
+    * Get the top topics for a given document.
+    * @param id the document id (see [[data.docIds]])
+    * @param numTopics  the number of topics to return
+    * @return  an array of `(topicId, weight)`
+    */
   def topTopicsForDocument(id: Long, numTopics: Int = 10): Array[(Int, Double)] = {
     model.topTopicsPerDocument(numTopics).filter(_._1 == id).map(r => r._2 zip r._3).first.sortBy(-_._2)
   }
 
+  /**
+    * Get the top documents for a given topic.
+    * @param tid the topic id
+    * @param numDocs         the number of documents to return
+    * @return   an array of `(id, title, weight)`
+    */
   def topDocumentsForTopic(tid: Int, numDocs: Int = 10) = {
     val topDocs = model.topDocumentsPerTopic(numDocs)(tid)
     data.spark.sparkContext.
@@ -46,6 +72,11 @@ class LDAQueryEngine(model: DistributedLDAModel, data: Data) {
       collect()
   }
 
+  /**
+    * Return the best topics for a given term
+    * @param wid the term id (see [[data.termIds]])
+    * @return an array of tuples `(topicId, weight)`
+    */
   def topTopicsForTerm(wid: Int) = {
     model.topicsMatrix.rowIter.
       drop(wid).next.toArray.
