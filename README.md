@@ -1,3 +1,8 @@
+[![scaladoc](https://img.shields.io/badge/doc-scaladoc-blue.svg)](https://derlin.github.io/bda-lsa-project/api/index.html)
+[![gh-pages](https://img.shields.io/badge/doc-gh--pages-blue.svg)](https://derlin.github.io/bda-lsa-project)
+[![scaladoc](https://img.shields.io/badge/doc-wiki-blue.svg)](https://github.com/derlin/bda-lsa-project/wiki)
+![love](https://img.shields.io/badge/made%20with%20%E2%99%A5-in%20Switzerland-ff69b4.svg)
+
 # Table of Contents
 
 - [About this repository](#about-this-repository)
@@ -28,6 +33,7 @@ This project is based on Chapter 6 of the book [_Advanced Analytics with Spark_]
 - the folder [spark-shell-scripts](spark-shell-scripts) contains scripts intended to be loaded into a spark-shell session. Once again, most of them are documented
 - READMEs are scattered at each level in order to help you understand the repository structure
 - the [wiki](https://github.com/derlin/bda-lsa-project/wiki) contains the results, notes, tips and tricks, how-to etc. This is a good place to start if you just want to see what we did.
+- the [gh-pages website](https://github.com/derlin/bda-lsa-project) contains other resources such as `all-steps-from-book` in html as well as the __scaladoc__ 
 
 # Building and Running
 
@@ -144,8 +150,9 @@ After creating the model (see steps above), you can use the `bda.lsa.lda.mllib.L
  spark-shell --jars bda-project-lsa-assembly-1.0.jar
  > val data = bda.lsa.getData(spark)
  > val model = bda.lsa.lda.ml.RunLDA.loadModel(spark)
+ > val q = new bda.lsa.ml.LDAQueryEngine(model, data)
  ```
-Note that there is no query engine available for this kind of model. 
+Note that the query engine might not be the most efficient... Some queries take time !
  
 #### mllib.LDA
  
