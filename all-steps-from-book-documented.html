@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>all-steps-from-book-documented.scala</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="page">
+
+      <div class="header">
+        
+          <h1>all-steps-from-book-documented.scala</h1>
+        
+
+        
+          <div class="toc">
+            <h3>Table of Contents</h3>
+            <ol>
+              
+                
+                <li>
+                  <a class="source" href="index.html">
+                    index.md
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="all-steps-from-book-documented.html">
+                    all-steps-from-book-documented.scala
+                  </a>
+                </li>
+              
+            </ol>
+          </div>
+        
+      </div>
+
+      
+        
+        <p>date: 12.05.17,
+author: Lucy Linder <a href="&#109;&#97;&#105;&#x6c;&#x74;&#111;&#x3a;&#108;&#x75;&#x63;&#x79;&#46;&#x64;&#101;&#x72;&#x6c;&#105;&#x6e;&#64;&#x67;&#x6d;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;&#x6d;">&#108;&#x75;&#x63;&#x79;&#46;&#x64;&#101;&#x72;&#x6c;&#105;&#x6e;&#64;&#x67;&#x6d;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;&#x6d;</a></p>
+
+        
+      
+        
+        <h1 id="introduction">Introduction</h1>
+<p>This notebook is my try to understand and redo the steps described in <em>Advanced Analytics With Spark</em>, 2nd edition, chapter 6.
+To execute this file, use:</p>
+<pre><code>git clone https:<span class="hljs-comment">//github.com/sryza/aas.git</span>
+cd aas/ch06-lsa
+mvn clean <span class="hljs-keyword">package</span>
+spark-shell --jars target/ch06-lsa<span class="hljs-number">-2.0</span><span class="hljs-number">.0</span>-jar-<span class="hljs-keyword">with</span>-dependencies.jar
+:load spark-shell-from-book.scala
+</code></pre>
+        
+          <div class='highlight'><pre>
+<span class="hljs-keyword">import</span> java.util.<span class="hljs-type">Properties</span>
+
+<span class="hljs-keyword">import</span> bda.lsa.book.<span class="hljs-type">RunLSA</span>
+<span class="hljs-keyword">import</span> edu.stanford.nlp.ling.<span class="hljs-type">CoreAnnotations</span>.{<span class="hljs-type">LemmaAnnotation</span>, <span class="hljs-type">SentencesAnnotation</span>, <span class="hljs-type">TokensAnnotation</span>}
+<span class="hljs-keyword">import</span> edu.stanford.nlp.pipeline.{<span class="hljs-type">Annotation</span>, <span class="hljs-type">StanfordCoreNLP</span>}
+<span class="hljs-keyword">import</span> edu.umd.cloud9.collection.<span class="hljs-type">XMLInputFormat</span>
+<span class="hljs-keyword">import</span> org.apache.hadoop.conf.<span class="hljs-type">Configuration</span>
+<span class="hljs-keyword">import</span> org.apache.hadoop.io._
+<span class="hljs-keyword">import</span> org.apache.spark.mllib.linalg.{<span class="hljs-type">Matrix</span>, <span class="hljs-type">SingularValueDecomposition</span>}
+<span class="hljs-keyword">import</span> org.apache.spark.sql.<span class="hljs-type">Dataset</span>
+
+<span class="hljs-keyword">import</span> scala.collection.<span class="hljs-type">Map</span>
+<span class="hljs-keyword">import</span> scala.collection.mutable.<span class="hljs-type">ArrayBuffer</span></pre></div>
+        
+      
+        
+        <h2 id="getting-data">Getting data</h2>
+<p>The <code>wikidump.xml</code> is at the root of the project (where you run the <code>spark-shell</code>)
+and contains a partial dump of wikipedia.</p>
+<p>To generate it:</p>
+<ol>
+<li>go to <a href="https://en.wikipedia.org/wiki/Special:Export">https://en.wikipedia.org/wiki/Special:Export</a></li>
+<li>add the <em>Commputer engineering</em> category</li>
+<li>press <em>Export</em></li>
+</ol>
+
+        
+          <div class='highlight'><pre>
+<span class="hljs-keyword">val</span> path = <span class="hljs-string">"wikidump.xml"</span>
+<span class="hljs-keyword">val</span> stopwordsPath = <span class="hljs-string">"src/main/resources/stopwords.txt"</span></pre></div>
+        
+      
+        
+        <h2 id="loading-data">Loading data</h2>
+<p>First, load the xml dump and parse it into a DataSet of Tuples <code>(title, content)</code>. This uses
+utilities from cloud9 especially made for wikipedia dumps.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-meta">@transient</span> <span class="hljs-keyword">val</span> conf = <span class="hljs-keyword">new</span> <span class="hljs-type">Configuration</span>()
+conf.set(<span class="hljs-type">XMLInputFormat</span>.<span class="hljs-type">START_TAG_KEY</span>, <span class="hljs-string">"&lt;page&gt;"</span>)
+conf.set(<span class="hljs-type">XMLInputFormat</span>.<span class="hljs-type">END_TAG_KEY</span>, <span class="hljs-string">"&lt;/page&gt;"</span>)
+<span class="hljs-keyword">val</span> kvs = spark.sparkContext.newAPIHadoopFile(path, classOf[<span class="hljs-type">XMLInputFormat</span>], classOf[<span class="hljs-type">LongWritable</span>], classOf[<span class="hljs-type">Text</span>], conf)
+<span class="hljs-keyword">val</span> rawXmls = kvs.map(_._2.toString).toDS()
+
+rawXmls.describe() <span class="hljs-comment">//&gt; org.apache.spark.sql.DataFrame = [summary: string, value: string]</span></pre></div>
+        
+      
+        
+        <p>Running <code>rawXmls.take(1)</code>, you get:</p>
+<pre><code>res6: <span class="hljs-type">Array</span>[<span class="hljs-type">String</span>] =
+<span class="hljs-type">Array</span>(&lt;page&gt;
+ &lt;title&gt;<span class="hljs-type">Sorting</span> network&lt;/title&gt;
+ &lt;ns&gt;<span class="hljs-number">0</span>&lt;/ns&gt;
+ &lt;id&gt;<span class="hljs-number">562061</span>&lt;/id&gt;
+ &lt;revision&gt;
+   &lt;id&gt;<span class="hljs-number">771651752</span>&lt;/id&gt;
+   &lt;parentid&gt;<span class="hljs-number">769140055</span>&lt;/parentid&gt;
+   &lt;timestamp&gt;<span class="hljs-number">2017</span><span class="hljs-number">-03</span><span class="hljs-number">-22</span>T19:<span class="hljs-number">38</span>:<span class="hljs-number">52</span>Z&lt;/timestamp&gt;
+   &lt;contributor&gt;
+     &lt;ip&gt;<span class="hljs-number">187.140</span><span class="hljs-number">.57</span><span class="hljs-number">.105</span>&lt;/ip&gt;
+   &lt;/contributor&gt;
+   &lt;comment&gt;<span class="hljs-comment">/* External links */</span>&lt;/comment&gt;
+   &lt;model&gt;wikitext&lt;/model&gt;
+   &lt;format&gt;text/x-wiki&lt;/format&gt;
+   &lt;text xml:space=<span class="hljs-string">"preserve"</span> bytes=<span class="hljs-string">"17682"</span>&gt;[[<span class="hljs-type">File</span>:<span class="hljs-type">SimpleSortingNetwork2</span>.svg|thumb|<span class="hljs-number">250</span>px|<span class="hljs-type">A</span> simple sorting network consisting of four wires and five connectors]]
+<span class="hljs-comment">// #</span>
+</code></pre>
+        
+      
+        
+        <h2 id="turning-xml-into-plain-text">Turning XML into plain text</h2>
+<p>the Cloud9 project provides APIs that handle this entirely.
+In the project, the class <code>AssembleDocumentTermMatrix</code> can be used, but in spark-shell we just define the
+function “from scratch”:</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">import</span> edu.umd.cloud9.collection.wikipedia.language._
+<span class="hljs-keyword">import</span> edu.umd.cloud9.collection.wikipedia._
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">wikiXmlToPlainText</span></span>(pageXml: <span class="hljs-type">String</span>): <span class="hljs-type">Option</span>[(<span class="hljs-type">String</span>, <span class="hljs-type">String</span>)] = {</pre></div>
+        
+      
+        
+        <p>Wikipedia has updated their dumps slightly since Cloud9 was written,
+so this hacky replacement is sometimes required to get parsing to work.</p>
+
+        
+          <div class='highlight'><pre>  <span class="hljs-keyword">val</span> hackedPageXml = pageXml.replaceFirst(
+    <span class="hljs-string">"&lt;text xml:space=\"preserve\" bytes=\"\\d+\"&gt;"</span>,
+    <span class="hljs-string">"&lt;text xml:space=\"preserve\"&gt;"</span>)
+  <span class="hljs-keyword">val</span> page = <span class="hljs-keyword">new</span> <span class="hljs-type">EnglishWikipediaPage</span>()
+  <span class="hljs-type">WikipediaPage</span>.readPage(page, hackedPageXml)
+  <span class="hljs-keyword">if</span> (page.isEmpty) <span class="hljs-type">None</span> <span class="hljs-comment">// Better: if (page.isEmpty || !page.isArticle || page.isRedirect || page.getTitle.contains("(disambiguation)"))</span>
+  <span class="hljs-keyword">else</span> <span class="hljs-type">Some</span>((page.getTitle, page.getContent))
+}
+<span class="hljs-keyword">val</span> docTexts = rawXmls.filter(_ != <span class="hljs-literal">null</span>).flatMap(wikiXmlToPlainText)</pre></div>
+        
+      
+        
+        <p>The <code>docTexts</code> variable holds:</p>
+<pre><code>scala&gt; docTexts.describe()
+res10: org.apache.spark.sql.DataFrame = [summary: string, _1: string ... 1 more field]
+
+scala&gt; docTexts.take(1)
+res11: Array[(String, String)] =
+Array((Sorting network,"Sorting network
+ In computer science, comparator networks are abstract devices built up of a fixed number ...
+scala&gt;
+</code></pre>
+        
+      
+        
+        <h2 id="cleansing-data">Cleansing Data</h2>
+<p>Before anything else, we need to remove stopwords and stem the words in the wikipedia contents.
+We begin with some utility definitions:</p>
+
+        
+          <div class='highlight'><pre>
+
+<span class="hljs-keyword">import</span> scala.collection.<span class="hljs-type">JavaConverters</span>._
+<span class="hljs-keyword">import</span> scala.collection.mutable.<span class="hljs-type">ArrayBuffer</span>
+<span class="hljs-keyword">import</span> edu.stanford.nlp.pipeline._
+<span class="hljs-keyword">import</span> edu.stanford.nlp.ling.<span class="hljs-type">CoreAnnotations</span>._
+<span class="hljs-keyword">import</span> java.util.<span class="hljs-type">Properties</span>
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">createNLPPipeline</span></span>(): <span class="hljs-type">StanfordCoreNLP</span> = {
+  <span class="hljs-keyword">val</span> props = <span class="hljs-keyword">new</span> <span class="hljs-type">Properties</span>()
+  props.put(<span class="hljs-string">"annotators"</span>, <span class="hljs-string">"tokenize, ssplit, pos, lemma"</span>)
+  <span class="hljs-keyword">new</span> <span class="hljs-type">StanfordCoreNLP</span>(props)
+}
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">isOnlyLetters</span></span>(str: <span class="hljs-type">String</span>): <span class="hljs-type">Boolean</span> = {
+  str.forall(c =&gt; <span class="hljs-type">Character</span>.isLetter(c))
+}
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">plainTextToLemmas</span></span>(text: <span class="hljs-type">String</span>, stopWords: <span class="hljs-type">Set</span>[<span class="hljs-type">String</span>], pipeline: <span class="hljs-type">StanfordCoreNLP</span>)
+: <span class="hljs-type">Seq</span>[<span class="hljs-type">String</span>] = {
+  <span class="hljs-keyword">val</span> doc = <span class="hljs-keyword">new</span> <span class="hljs-type">Annotation</span>(text)
+  pipeline.annotate(doc)
+  <span class="hljs-keyword">val</span> lemmas = <span class="hljs-keyword">new</span> <span class="hljs-type">ArrayBuffer</span>[<span class="hljs-type">String</span>]()
+  <span class="hljs-keyword">val</span> sentences = doc.get(classOf[<span class="hljs-type">SentencesAnnotation</span>])
+  <span class="hljs-keyword">for</span> (sentence &lt;- sentences.asScala;
+       token &lt;- sentence.get(classOf[<span class="hljs-type">TokensAnnotation</span>]).asScala) {
+    <span class="hljs-keyword">val</span> lemma = token.get(classOf[<span class="hljs-type">LemmaAnnotation</span>])
+    <span class="hljs-keyword">if</span> (lemma.length &gt; <span class="hljs-number">2</span> &amp;&amp; !stopWords.contains(lemma) &amp;&amp; isOnlyLetters(lemma)) {
+      lemmas += lemma.toLowerCase
+    }
+  }
+  lemmas
+}</pre></div>
+        
+      
+        
+        <p>Load the stopwords list:
+(don’t forget to use <code>toSet</code> ! The book didn’t mention it, but an <code>Iterator</code> is not serializable…)</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">val</span> stopWords = scala.io.<span class="hljs-type">Source</span>.fromFile(stopwordsPath).getLines.toSet <span class="hljs-comment">// toSet !</span></pre></div>
+        
+      
+        
+        <p>broadcast the stopwords list so that they are available to the whole cluster:
+(note: don’t use the <code>value</code> at the end as the book said, since we use <code>.value</code> later in the code…)</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">val</span> bStopWords = spark.sparkContext.broadcast(stopWords)</pre></div>
+        
+      
+        
+        <p>finally, do the cleansing:
+Note that we use <code>mapPartitions</code> so that we only initialize the NLP pipeline object
+once per partition instead of once per document.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">val</span> terms: <span class="hljs-type">Dataset</span>[(<span class="hljs-type">String</span>, <span class="hljs-type">Seq</span>[<span class="hljs-type">String</span>])] = docTexts.mapPartitions { iter =&gt;
+  <span class="hljs-keyword">val</span> pipeline = createNLPPipeline()
+  iter.map { <span class="hljs-keyword">case</span> (title, contents) =&gt; (title, plainTextToLemmas(contents, bStopWords.value, pipeline)) }
+}</pre></div>
+        
+      
+        
+        <p>Result:</p>
+<pre><code>scala&gt; terms.describe()
+res18: org.apache.spark.sql.<span class="hljs-type">DataFrame</span> = [summary: string, _1: string]
+
+scala&gt; terms.take(<span class="hljs-number">1</span>)
+<span class="hljs-type">Adding</span> annotator tokenize
+<span class="hljs-type">Adding</span> annotator ssplit
+<span class="hljs-type">Adding</span> annotator pos
+<span class="hljs-type">Adding</span> annotator lemma
+res19: <span class="hljs-type">Array</span>[(<span class="hljs-type">String</span>, <span class="hljs-type">Seq</span>[<span class="hljs-type">String</span>])] = <span class="hljs-type">Array</span>((<span class="hljs-type">Sorting</span> network,<span class="hljs-type">WrappedArray</span>(sort, network, computer, science, ...
+scala&gt;
+</code></pre><p>=&gt; <strong>terms is now a Dataset of sequences of terms, one per document</strong></p>
+
+        
+      
+        
+        <h2 id="computing-term-frequencies-in-documents-tf-">Computing term frequencies in documents (TF)</h2>
+<p>The <code>spark.ml</code> package already contains utilities to compute both the term frequency per document and the global term frequencies.</p>
+
+        
+      
+        
+        <p>First, we need to convert the Dataset into a Dataframe. We also remove the documents with less than two terms:</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">val</span> termsDF = terms.toDF(<span class="hljs-string">"title"</span>, <span class="hljs-string">"terms"</span>)
+<span class="hljs-keyword">val</span> filtered = termsDF.where(size($<span class="hljs-string">"terms"</span>) &gt; <span class="hljs-number">1</span>)</pre></div>
+        
+      
+        
+        <p><code>CountVectorizer</code> and <code>CountVectorizerModel</code> from the ml library aim to help convert a collection of text documents to vectors of token counts.
+As per the <a href="https://spark.apache.org/docs/1.5.1/ml-features.html#countvectorizer">documentation</a>:</p>
+<blockquote>
+<p>During the fitting process, CountVectorizer will select the top vocabSize words ordered by term frequency across the corpus. An optional parameter “minDF” also affect the fitting process by specifying the minimum number (or fraction if &lt; 1.0) of documents a term must appear in to be included in the vocabulary.</p>
+<p>CountVectorizerModel produces sparse representations for the documents over the vocabulary, which can then be passed to other algorithms</p>
+</blockquote>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">import</span> org.apache.spark.ml.feature.<span class="hljs-type">CountVectorizer</span>
+
+<span class="hljs-keyword">val</span> numTerms = <span class="hljs-number">20000</span> <span class="hljs-comment">// number of terms to keep (the most frequent ones)</span>
+<span class="hljs-keyword">val</span> countVectorizer = <span class="hljs-keyword">new</span> <span class="hljs-type">CountVectorizer</span>().setInputCol(<span class="hljs-string">"terms"</span>).setOutputCol(<span class="hljs-string">"termFreqs"</span>).setVocabSize(numTerms)
+<span class="hljs-keyword">val</span> vocabModel = countVectorizer.fit(filtered) <span class="hljs-comment">// extract the vocabulary from our DF and construct the model</span>
+<span class="hljs-keyword">val</span> docTermFreqs = vocabModel.transform(filtered) <span class="hljs-comment">// transform our DF / apply the model</span></pre></div>
+        
+      
+        
+        <pre><code>docTermFreqs.show()
+
++--------------------+--------------------+--------------------+
+|               title|               terms|           termFreqs|
++--------------------+--------------------+--------------------+
+|     <span class="hljs-type">Sorting</span> network|[sort, network, c...|(<span class="hljs-number">4744</span>,[<span class="hljs-number">1</span>,<span class="hljs-number">4</span>,<span class="hljs-number">5</span>,<span class="hljs-number">7</span>,<span class="hljs-number">8</span>,...|
+|  <span class="hljs-type">Tyranny</span> of numbers|[tyranny, number,...|(<span class="hljs-number">4744</span>,[<span class="hljs-number">1</span>,<span class="hljs-number">3</span>,<span class="hljs-number">4</span>,<span class="hljs-number">5</span>,<span class="hljs-number">6</span>,...|
+|<span class="hljs-type">Reflected</span>-wave sw...|[switching, switc...|(<span class="hljs-number">4744</span>,[<span class="hljs-number">0</span>,<span class="hljs-number">1</span>,<span class="hljs-number">3</span>,<span class="hljs-number">4</span>,<span class="hljs-number">5</span>,...|
+|<span class="hljs-type">Category</span>:<span class="hljs-type">Computer</span>...|[category, comput...|(<span class="hljs-number">4744</span>,[<span class="hljs-number">0</span>,<span class="hljs-number">1</span>,<span class="hljs-number">8</span>,<span class="hljs-number">30</span>,<span class="hljs-number">5.</span>..|
++--------------------+--------------------+--------------------+
+</code></pre>
+        
+      
+        
+        <p>It is a good idea to cache <code>docTermFreqs</code>, since we will use it more than once:</p>
+
+        
+          <div class='highlight'><pre>docTermFreqs.cache()</pre></div>
+        
+      
+        
+        <h2 id="computing-inverse-document-frequencies">Computing inverse document frequencies</h2>
+<p>From the <a href="https://spark.apache.org/docs/2.1.0/ml-features.html#tf-idf">documentation</a>:</p>
+<blockquote>
+<p>IDF is an Estimator which is fit on a dataset and produces an IDFModel. The IDFModel takes feature vectors (generally created from HashingTF or CountVectorizer) and scales each column. Intuitively, it down-weights columns which appear frequently in a corpus.</p>
+</blockquote>
+
+        
+          <div class='highlight'><pre>
+<span class="hljs-keyword">import</span> org.apache.spark.ml.feature.<span class="hljs-type">IDF</span></pre></div>
+        
+      
+        
+        <p>Once again, we first construct a model and then feed it with our data:</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">val</span> idf = <span class="hljs-keyword">new</span> <span class="hljs-type">IDF</span>().setInputCol(<span class="hljs-string">"termFreqs"</span>).setOutputCol(<span class="hljs-string">"tfidfVec"</span>)
+<span class="hljs-keyword">val</span> idfModel = idf.fit(docTermFreqs)
+<span class="hljs-keyword">val</span> docTermMatrix = idfModel.transform(docTermFreqs) <span class="hljs-comment">//.select("title", "tfidfVec")</span></pre></div>
+        
+      
+        
+        <p>we get:</p>
+<pre><code>+--------------------+--------------------+--------------------+--------------------+
+|               title|               terms|           termFreqs|            tfidfVec|
++--------------------+--------------------+--------------------+--------------------+
+|     <span class="hljs-type">Sorting</span> network|[sort, network, c...|(<span class="hljs-number">4744</span>,[<span class="hljs-number">1</span>,<span class="hljs-number">4</span>,<span class="hljs-number">5</span>,<span class="hljs-number">7</span>,<span class="hljs-number">8</span>,...|(<span class="hljs-number">4744</span>,[<span class="hljs-number">1</span>,<span class="hljs-number">4</span>,<span class="hljs-number">5</span>,<span class="hljs-number">7</span>,<span class="hljs-number">8</span>,...|
+|  <span class="hljs-type">Tyranny</span> of numbers|[tyranny, number,...|(<span class="hljs-number">4744</span>,[<span class="hljs-number">1</span>,<span class="hljs-number">3</span>,<span class="hljs-number">4</span>,<span class="hljs-number">5</span>,<span class="hljs-number">6</span>,...|(<span class="hljs-number">4744</span>,[<span class="hljs-number">1</span>,<span class="hljs-number">3</span>,<span class="hljs-number">4</span>,<span class="hljs-number">5</span>,<span class="hljs-number">6</span>,...|
+|<span class="hljs-type">Reflected</span>-wave sw...|[switching, switc...|(<span class="hljs-number">4744</span>,[<span class="hljs-number">0</span>,<span class="hljs-number">1</span>,<span class="hljs-number">3</span>,<span class="hljs-number">4</span>,<span class="hljs-number">5</span>,...|(<span class="hljs-number">4744</span>,[<span class="hljs-number">0</span>,<span class="hljs-number">1</span>,<span class="hljs-number">3</span>,<span class="hljs-number">4</span>,<span class="hljs-number">5</span>,...|
+|<span class="hljs-type">Category</span>:<span class="hljs-type">Computer</span>...|[category, comput...|(<span class="hljs-number">4744</span>,[<span class="hljs-number">0</span>,<span class="hljs-number">1</span>,<span class="hljs-number">8</span>,<span class="hljs-number">30</span>,<span class="hljs-number">5.</span>..|(<span class="hljs-number">4744</span>,[<span class="hljs-number">0</span>,<span class="hljs-number">1</span>,<span class="hljs-number">8</span>,<span class="hljs-number">30</span>,<span class="hljs-number">5.</span>..|
+|<span class="hljs-type">Category</span>:<span class="hljs-type">Computer</span>...|[category, comput...|(<span class="hljs-number">4744</span>,[<span class="hljs-number">1</span>,<span class="hljs-number">30</span>,<span class="hljs-number">271</span>],...|(<span class="hljs-number">4744</span>,[<span class="hljs-number">1</span>,<span class="hljs-number">30</span>,<span class="hljs-number">271</span>],...|
++--------------------+--------------------+--------------------+--------------------+
+</code></pre><p>To ensure it worked, we can extract the actual term and tfidf frequencies for the first row:.</p>
+
+        
+          <div class='highlight'><pre>vocabModel.vocabulary.take(<span class="hljs-number">8</span>).zip {
+  docTermMatrix.first.getAs[org.apache.spark.ml.linalg.<span class="hljs-type">SparseVector</span>](<span class="hljs-number">2</span>).toArray.zip {
+    docTermMatrix.first.getAs[org.apache.spark.ml.linalg.<span class="hljs-type">SparseVector</span>](<span class="hljs-number">3</span>).toArray
+  }
+}</pre></div>
+        
+      
+        
+        <p>We get:</p>
+<pre><code><span class="hljs-type">Array</span>((system,(<span class="hljs-number">0.0</span>,<span class="hljs-number">0.0</span>)), (computer,(<span class="hljs-number">3.0</span>,<span class="hljs-number">0.6531704515346116</span>)), (university,(<span class="hljs-number">0.0</span>,<span class="hljs-number">0.0</span>)),
+(engineering,(<span class="hljs-number">0.0</span>,<span class="hljs-number">0.0</span>)), (use,(<span class="hljs-number">13.0</span>,<span class="hljs-number">5.556772192750215</span>)), (design,(<span class="hljs-number">2.0</span>,<span class="hljs-number">1.065609060969532</span>)),
+(engineer,(<span class="hljs-number">0.0</span>,<span class="hljs-number">0.0</span>)), (can,(<span class="hljs-number">18.0</span>,<span class="hljs-number">10.269807452417034</span>)))
+</code></pre><p>As we can see, <em>computer</em> and <em>can</em> have been clearly downsized..</p>
+
+        
+      
+        
+        <hr>
+
+        
+      
+        
+        <h2 id="notes-about-sparsevector-">Notes about <code>SparseVector</code></h2>
+<p>When using <code>show</code> on our matrix, we see something like <code>4744,[1,4,5,7,8,</code>. This is a <code>SparseVector</code>.
+the <code>toString</code> methods shows 3 elements:</p>
+<ol>
+<li>its size: <code>4744</code> =&gt; the size of the vocabulary (<code>vocabModel.vocabulary.length</code>)</li>
+<li>a list of indices (non-zero values)</li>
+<li>a list of values at those indices</li>
+</ol>
+<p>To extract it, we can do:</p>
+
+        
+          <div class='highlight'><pre>docTermMatrix.
+  first. <span class="hljs-comment">// we the first row</span>
+  getAs[org.apache.spark.ml.linalg.<span class="hljs-type">SparseVector</span>](<span class="hljs-number">2</span>). <span class="hljs-comment">// convert column 2 (termFreqs) into a sparseVector</span>
+  toDense <span class="hljs-comment">// convert it to a dense vector</span></pre></div>
+        
+      
+        
+        <pre><code>org.apache.spark.ml.linalg.<span class="hljs-type">DenseVector</span> = [<span class="hljs-number">0.0</span>,<span class="hljs-number">3.0</span>,<span class="hljs-number">0.0</span>,<span class="hljs-number">0.0</span>,<span class="hljs-number">13.0</span>,<span class="hljs-number">2.0</span>,<span class="hljs-number">0.0</span>,<span class="hljs-number">18.0</span>,...
+</code></pre><p> So, here it is clearer: we have the frequency for each word in our vocabulary:</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">val</span> f = docTermMatrix.first.getAs[org.apache.spark.ml.linalg.<span class="hljs-type">SparseVector</span>](<span class="hljs-number">2</span>).toArray</pre></div>
+        
+      
+        
+        <p>to get the most frequent words:</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">val</span> wordsFreqs = f.zipWithIndex.map {
+  <span class="hljs-keyword">case</span> (freq, idx) =&gt; (vocabModel.vocabulary(idx), freq)
+}.sortBy(-_._2)</pre></div>
+        
+      
+        
+        <p>which yields:</p>
+<pre><code><span class="hljs-type">Array</span>[(<span class="hljs-type">String</span>, <span class="hljs-type">Double</span>)] = [(network,<span class="hljs-number">53.0</span>), (sort,<span class="hljs-number">46.0</span>), (can,<span class="hljs-number">18.0</span>), (comparator,<span class="hljs-number">18.0</span>),
+(wire,<span class="hljs-number">16.0</span>), (value,<span class="hljs-number">15.0</span>), (use,<span class="hljs-number">13.0</span>), (size,<span class="hljs-number">12.0</span>), (number,<span class="hljs-number">11.0</span>), (depth,<span class="hljs-number">11.0</span>),
+(input,<span class="hljs-number">10.0</span>), (construct,<span class="hljs-number">8.0</span>), (principle,<span class="hljs-number">8.0</span>), (construction,<span class="hljs-number">8.0</span>), ...  ]
+</code></pre>
+        
+      
+        
+        <hr>
+
+        
+      
+        
+        
+        
+      
+        
+        <h2 id="indexing-documents-and-terms">Indexing documents and terms</h2>
+<p>Now, we need to get rid of strings, since as we work with matrices and vectors, non-numeric columns are not welcomed.
+The terms are already indiced by our <code>vocabulary</code> in <code>vocabModel.vocabulary</code>, but we also need indices for documents:</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">val</span> termIds = vocabModel.vocabulary
+<span class="hljs-keyword">val</span> docIds = docTermFreqs.rdd.map(_.getString(<span class="hljs-number">0</span>)).
+  zipWithUniqueId(). <span class="hljs-comment">// title =&gt; (title, idx)</span>
+  map(_.swap). <span class="hljs-comment">// (title, idx) =&gt; (idx, title)</span>
+  collect().toMap</pre></div>
+        
+      
+        
+        <h2 id="converting-dataset-to-rdd">Converting Dataset to RDD</h2>
+<p>as explained in the book:</p>
+<blockquote>
+<p>At the time of this writing, the spark.ml package, which operates on DataFrames, does not include an implementation of SVD. However, the older spark.mllib, which operates on RDDs, does. This means that, to compute the SVD of our document­term matrix, we need to represent it as an RDD of Vectors.</p>
+</blockquote>
+
+        
+          <div class='highlight'><pre>
+<span class="hljs-keyword">import</span> org.apache.spark.mllib.linalg.{<span class="hljs-type">Vectors</span>, <span class="hljs-type">Vector</span> =&gt; <span class="hljs-type">MLLibVector</span>}
+<span class="hljs-keyword">import</span> org.apache.spark.ml.linalg.{<span class="hljs-type">Vector</span> =&gt; <span class="hljs-type">MLVector</span>}
+
+<span class="hljs-keyword">val</span> vecRdd = docTermMatrix.select(<span class="hljs-string">"tfidfVec"</span>).rdd.map { row =&gt;
+  <span class="hljs-type">Vectors</span>.fromML(row.getAs[<span class="hljs-type">MLVector</span>](<span class="hljs-string">"tfidfVec"</span>))
+}</pre></div>
+        
+      
+        
+        <h2 id="applying-the-svd-algorithm">Applying the SVD algorithm</h2>
+<p>The computation requires <code>O(nk)</code> storage on the driver, O(n) storage for each task, and O(k) passes over the data.</p>
+
+        
+          <div class='highlight'><pre>
+<span class="hljs-keyword">import</span> org.apache.spark.mllib.linalg.distributed.<span class="hljs-type">RowMatrix</span></pre></div>
+        
+      
+        
+        <p><em>important note</em>: The RDD should be cached in memory beforehand because the computation requires multiple passes over the data.</p>
+
+        
+          <div class='highlight'><pre>vecRdd.cache()
+<span class="hljs-keyword">val</span> mat = <span class="hljs-keyword">new</span> <span class="hljs-type">RowMatrix</span>(vecRdd)
+<span class="hljs-keyword">val</span> k = <span class="hljs-number">1000</span>
+<span class="hljs-keyword">val</span> svd = mat.computeSVD(k, computeU = <span class="hljs-literal">true</span>)</pre></div>
+        
+      
+        
+        <p>Output:</p>
+<pre><code>svd: org.apache.spark.mllib.linalg.<span class="hljs-type">SingularValueDecomposition</span>[org.apache.spark.mllib.linalg.distributed.<span class="hljs-type">RowMatrix</span>,org.apache.spark.mllib.linalg.<span class="hljs-type">Matrix</span>] =
+<span class="hljs-type">SingularValueDecomposition</span>(org.apache.spark.mllib.linalg.distributed.<span class="hljs-type">RowMatrix</span>@<span class="hljs-number">43</span>b25917,[<span class="hljs-number">412.9399696525229</span>,<span class="hljs-number">312.0056141219418</span>,<span class="hljs-number">216.90564372238936</span>,<span class="hljs-number">212.83663472536242</span>,<span class="hljs-number">207.65338945876277</span>,<span class="hljs-number">189.53356981493454</span>,<span class="hljs-number">162.7343588223653</span>,<span class="hljs-number">146.22785130517616</span>,<span class="hljs-number">145.10273359697285</span>,<span class="hljs-number">143.34274103603087</span>,<span class="hljs-number">139.82952741627577</span>,<span class="hljs-number">137.91556834483055</span>,<span class="hljs-number">127.07933593098204</span>,<span class="hljs-number">106.06799112848157</span>,<span class="hljs-number">100.10579199997758</span>,<span class="hljs-number">90.14373515703484</span>,<span class="hljs-number">87.07893418664202</span>,<span class="hljs-number">80.36514625902937</span>,<span class="hljs-number">71.4908098993236</span>,<span class="hljs-number">70.1172162163747</span>,<span class="hljs-number">68.4914279950864</span>,<span class="hljs-number">55.48323686515424</span>,<span class="hljs-number">49.6425795878338</span>,<span class="hljs-number">47.11294330746061</span>,<span class="hljs-number">45.04494671224828</span>,<span class="hljs-number">44.47124688168499</span>,<span class="hljs-number">44.125219835730974</span>,<span class="hljs-number">42.61106176312821</span>,<span class="hljs-number">41.39339476611446</span>,<span class="hljs-number">37.227726198323126</span>,<span class="hljs-number">31.0</span>...
+</code></pre><h2 id="getting-understandable-results">Getting understandable results</h2>
+
+        
+          <div class='highlight'><pre>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">topTermsInTopConcepts</span></span>(svd: <span class="hljs-type">SingularValueDecomposition</span>[<span class="hljs-type">RowMatrix</span>, <span class="hljs-type">Matrix</span>], numConcepts: <span class="hljs-type">Int</span>, numTerms: <span class="hljs-type">Int</span>, termIds: <span class="hljs-type">Array</span>[<span class="hljs-type">String</span>]): <span class="hljs-type">Seq</span>[<span class="hljs-type">Seq</span>[(<span class="hljs-type">String</span>, <span class="hljs-type">Double</span>)]] = {
+  <span class="hljs-keyword">val</span> v = svd.<span class="hljs-type">V</span>
+  <span class="hljs-keyword">val</span> topTerms = <span class="hljs-keyword">new</span> <span class="hljs-type">ArrayBuffer</span>[<span class="hljs-type">Seq</span>[(<span class="hljs-type">String</span>, <span class="hljs-type">Double</span>)]]()
+  <span class="hljs-keyword">val</span> arr = v.toArray
+  <span class="hljs-keyword">for</span> (i &lt;- <span class="hljs-number">0</span> until numConcepts) {
+    <span class="hljs-keyword">val</span> offs = i * v.numRows
+    <span class="hljs-keyword">val</span> termWeights = arr.slice(offs, offs + v.numRows).zipWithIndex
+    <span class="hljs-keyword">val</span> sorted = termWeights.sortBy(-_._1)
+    topTerms += sorted.take(numTerms).map { <span class="hljs-keyword">case</span> (score, id) =&gt; (termIds(id), score) }
+  }
+  topTerms
+}
+
+<span class="hljs-keyword">val</span> topConceptTerms = topTermsInTopConcepts(svd, <span class="hljs-number">4</span>, <span class="hljs-number">10</span>, termIds)
+topConceptTerms(<span class="hljs-number">0</span>).map(_._1).mkString(<span class="hljs-string">", "</span>)</pre></div>
+        
+      
+        
+        <p>Result: <em>stub, motherboard, slang, neutrality, peer, browse, disciplined, quantifiable, computerized, tank</em></p>
+
+        
+          <div class='highlight'><pre>
+<span class="hljs-keyword">val</span> topTermsForConcepts = <span class="hljs-type">RunLSA</span>.topTermsInTopConcepts(svd, <span class="hljs-number">1</span>, <span class="hljs-number">5</span>, vocabModel.vocabulary)
+topTermsForConcepts.foreach(s =&gt; {
+  println(<span class="hljs-string">"TOPIC:"</span>)
+  s.foreach { <span class="hljs-keyword">case</span> (term, weight) =&gt;
+    println(<span class="hljs-string">s"<span class="hljs-subst">${term}</span>\t<span class="hljs-subst">$weight</span>"</span>)
+  }
+  println()
+})</pre></div>
+        
+      
+        
+        <p>Result:</p>
+<pre><code><span class="hljs-type">TOPIC</span>:
+stub    <span class="hljs-number">-2.4294473245818626E-7</span>
+motherboard <span class="hljs-number">-1.585645154750931E-6</span>
+slang   <span class="hljs-number">-2.3079451799351905E-6</span>
+neutrality  <span class="hljs-number">-2.3079451800045794E-6</span>
+peer    <span class="hljs-number">-2.3079451800245288E-6</span>
+</code></pre>
+        
+      
+      <div class="fleur">h</div>
+    </div>
+  </div>
+</body>
+</html>

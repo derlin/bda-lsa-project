@@ -1,0 +1,152 @@
+<!DOCTYPE html >
+<html>
+        <head>
+          <title>svd - bda.lsa.svd</title>
+          <meta name="description" content="svd - bda.lsa.svd" />
+          <meta name="keywords" content="svd bda.lsa.svd" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript" src="../../../lib/jquery.js" id="jquery-js"></script>
+      <script type="text/javascript" src="../../../lib/jquery-ui.js"></script>
+      <script type="text/javascript" src="../../../lib/template.js"></script>
+      <script type="text/javascript" src="../../../lib/tools.tooltip.js"></script>
+      
+      <script type="text/javascript">
+         if(top === self) {
+            var url = '../../../index.html';
+            var hash = 'bda.lsa.svd.package';
+            var anchor = window.location.hash;
+            var anchor_opt = '';
+            if (anchor.length >= 1)
+              anchor_opt = '@' + anchor.substring(1);
+            window.location.href = url + '#' + hash + anchor_opt;
+         }
+   	  </script>
+    
+        </head>
+        <body class="value">
+      <div id="definition">
+        <img alt="Package" src="../../../lib/package_big.png" />
+        <p id="owner"><a href="../../package.html" class="extype" name="bda">bda</a>.<a href="../package.html" class="extype" name="bda.lsa">lsa</a></p>
+        <h1>svd</h1><span class="permalink">
+      <a href="../../../index.html#bda.lsa.svd.package" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <span class="name">svd</span>
+      </span>
+      </h4>
+      
+          <div id="comment" class="fullcommenttop"></div>
+        
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input id="mbrsel-input" type="text" accesskey="/" /></span><span class="post"></span></div>
+        
+        
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        
+
+        <div id="types" class="types members">
+              <h3>Type Members</h3>
+              <ol><li name="bda.lsa.svd.SVDQueryEngine" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="SVDQueryEngineextendsAnyRef"></a>
+      <a id="SVDQueryEngine:SVDQueryEngine"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="SVDQueryEngine.html"><span class="name">SVDQueryEngine</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.11.8/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#bda.lsa.svd.package@SVDQueryEngineextendsAnyRef" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">This class implements useful methods to query and discover an SVD model.</p><div class="fullcomment"><div class="comment cmt"><p>This class implements useful methods to query and discover an SVD model.
+It is inspired by the book Advanced Spark Programing v2, chapter 6, but has been modified to
+work with <span class="extype" name="org.apache.spark.mllib.linalg.distributed.IndexedRowMatrix">org.apache.spark.mllib.linalg.distributed.IndexedRowMatrix</span> instead of
+<span class="extype" name="org.apache.spark.mllib.linalg.distributed.RowMatrix">org.apache.spark.mllib.linalg.distributed.RowMatrix</span>. This way, the document id is embedded in the matrix
+instead of relying on a &quot;zipWithUniqueId trick&quot; that works only when we do everything
+(preprocessing, modeling, querying) inside the same spark session.</p><p>context: BDA - Master MSE,
+date: 18.05.17
+</p></div></div>
+    </li></ol>
+            </div>
+
+        
+
+        <div id="values" class="values members">
+              <h3>Value Members</h3>
+              <ol><li name="bda.lsa.svd.RunSVD" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="RunSVD"></a>
+      <a id="RunSVD:RunSVD"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="RunSVD$.html"><span class="name">RunSVD</span></a>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#bda.lsa.svd.package@RunSVD" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Class for creating a Singular Value Decomposition model using spark mllib.</p><div class="fullcomment"><div class="comment cmt"><p>Class for creating a Singular Value Decomposition model using spark mllib.
+It is inspired by the book Advanced Spark Programing v2, chapter 6, but has been modified to
+work with <span class="extype" name="org.apache.spark.mllib.linalg.distributed.IndexedRowMatrix">org.apache.spark.mllib.linalg.distributed.IndexedRowMatrix</span> instead of
+<span class="extype" name="org.apache.spark.mllib.linalg.distributed.RowMatrix">org.apache.spark.mllib.linalg.distributed.RowMatrix</span>. This way, the document id is embedded in the matrix
+instead of relying on a &quot;zipWithUniqueId trick&quot; that works only when we do everything
+(preprocessing, modeling, querying) inside the same spark session.</p><p>context: BDA - Master MSE,
+date: 18.05.17
+</p></div></div>
+    </li></ol>
+            </div>
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+
+
+    </body>
+      </html>
