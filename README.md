@@ -34,6 +34,7 @@ This project is based on Chapter 6 of the book [_Advanced Analytics with Spark_]
 - READMEs are scattered at each level in order to help you understand the repository structure
 - the [wiki](https://github.com/derlin/bda-lsa-project/wiki) contains the results, notes, tips and tricks, how-to etc. This is a good place to start if you just want to see what we did.
 - the [gh-pages website](https://github.com/derlin/bda-lsa-project) contains other resources such as `all-steps-from-book` in html as well as the __scaladoc__ 
+- a __presentation__ is also available in [PDF (other/bda-lsa-project-slides.pdf)](other/bda-lsa-project-slides.pdf) or in [google slides](https://docs.google.com/presentation/d/1QmcnOZX43cVA3acqbjQT5rEmPPhYmRVuP0GbZjslEhM/edit?usp=sharing)  
 
 # Building and Running
 
