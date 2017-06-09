@@ -177,22 +177,22 @@ class SVDQueryEngine(val model: SingularValueDecomposition[IndexedRowMatrix, Mat
 
   def printTopTermsForTerm(term: Int): Unit = {
     val idWeights = topTermsForTerm(term)
-    println(idWeights.map { case (score, id) => (data.termIds(id), score) }.mkString(", "))
+    println(idWeights.map { case (score, id) => (data.termIds(id), score) }.mkString("\n"))
   }
 
   def printTopDocsForDoc(doc: Long): Unit = {
     val idWeights = topDocsForDoc(doc)
-    println(idWeights.map { case (score, id) => (data.docTitle(id), score) }.mkString(", "))
+    println(idWeights.map { case (score, id) => (data.docTitle(id), score) }.mkString("\n"))
   }
 
   def printTopDocsForTerm(term: Int): Unit = {
     val idWeights = topDocsForTerm(term)
-    println(idWeights.map { case (score, id) => (data.docTitle(id), score) }.mkString(", "))
+    println(idWeights.map { case (score, id) => (data.docTitle(id), score) }.mkString("\n"))
   }
 
   def printTopDocsForTermQuery(terms: Seq[String]): Unit = {
     val queryVec = termsToQueryVector(terms)
     val idWeights = topDocsForTermQuery(queryVec)
-    println(idWeights.map { case (score, id) => (data.docTitle(id), score) }.mkString(", "))
+    println(idWeights.map { case (score, id) => (data.docTitle(id), score) }.mkString("\n"))
   }
 }
